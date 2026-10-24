@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispatch Priority Heatmap</title>
+<style>
+:root{
+  --bg:#fbfbfa;--surface:#ffffff;--surface-2:#f3f2ee;--text:#1b1b1a;--text-2:#52514e;--muted:#898781;
+  --border:rgba(11,11,11,.10);--border-strong:rgba(11,11,11,.22);
+  --s1-bg:#E6F1FB;--s1-fg:#0C447C;--s2-bg:#85B7EB;--s2-fg:#042C53;--s3-bg:#185FA5;--s3-fg:#E6F1FB;
+  --new-bg:#FCEBEB;--new-fg:#A32D2D;--old-bg:#f1efe8;--old-fg:#5F5E5A;--accent:#185FA5;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141413;--surface:#1c1c1b;--surface-2:#262624;--text:#f0efec;--text-2:#c3c2b7;--muted:#898781;
+    --border:rgba(255,255,255,.10);--border-strong:rgba(255,255,255,.24);
+    --s1-bg:#0C447C;--s1-fg:#E6F1FB;--s2-bg:#378ADD;--s2-fg:#042C53;--s3-bg:#85B7EB;--s3-fg:#042C53;
+    --new-bg:#501313;--new-fg:#F7C1C1;--old-bg:#2c2c2a;--old-fg:#D3D1C7;--accent:#85B7EB;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141413;--surface:#1c1c1b;--surface-2:#262624;--text:#f0efec;--text-2:#c3c2b7;--muted:#898781;
+  --border:rgba(255,255,255,.10);--border-strong:rgba(255,255,255,.24);
+  --s1-bg:#0C447C;--s1-fg:#E6F1FB;--s2-bg:#378ADD;--s2-fg:#042C53;--s3-bg:#85B7EB;--s3-fg:#042C53;
+  --new-bg:#501313;--new-fg:#F7C1C1;--old-bg:#2c2c2a;--old-fg:#D3D1C7;--accent:#85B7EB;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+.sub{color:var(--text-2);margin:0 0 20px}
+.panel{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.ctl label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-2);margin-bottom:4px}
+.ctl input[type=range]{width:100%;accent-color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+button,.chip{font:inherit;font-size:13px;background:transparent;color:var(--text);border:.5px solid var(--border-strong);border-radius:8px;padding:5px 12px;cursor:pointer}
+button:hover,.chip:hover{background:var(--surface-2)}
+.chip[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+input[type=search]{font:inherit;font-size:13px;background:var(--surface);color:var(--text);border:.5px solid var(--border-strong);border-radius:8px;padding:5px 10px;min-width:200px;flex:1;max-width:320px}
+.spacer{flex:1}
+.grid-head,.row{display:grid;grid-template-columns:minmax(0,1fr) 72px 72px 72px 72px 60px 132px 28px;gap:4px;align-items:center}
+.grid-head{font-size:11px;color:var(--muted);padding:0 12px 6px;text-align:center;line-height:1.3}
+.grid-head div:first-child{text-align:left}
+.area{background:var(--surface);border:.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.area-h{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:0;padding:12px;background:var(--surface-2);text-align:left}
+.area-h:hover{background:var(--surface-2);filter:brightness(.98)}
+.area-h .chev{transition:transform .15s;color:var(--muted);width:14px}
+.area[data-open="false"] .chev{transform:rotate(-90deg)}
+.area[data-open="false"] .rows{display:none}
+.area-name{font-weight:500;font-size:15px}
+.area-meta{color:var(--text-2);font-size:12px}
+.area-score{margin-left:auto;font-weight:500;font-size:15px;font-variant-numeric:tabular-nums}
+.rows{padding:6px 12px 10px}
+.row{padding:4px 0;border-top:.5px solid var(--border)}
+.row:first-child{border-top:0}
+.item{display:flex;flex-direction:column;min-width:0;padding-right:8px}
+.item b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item small{color:var(--muted);font-size:12px}
+.cell{height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:500;font-variant-numeric:tabular-nums}
+.s1{background:var(--s1-bg);color:var(--s1-fg)}.s2{background:var(--s2-bg);color:var(--s2-fg)}.s3{background:var(--s3-bg);color:var(--s3-fg)}
+.su{border:.5px dashed var(--border-strong);color:var(--muted);font-weight:400}
+.score{text-align:center;font-weight:500;font-size:16px;font-variant-numeric:tabular-nums}
+.tag{font-size:12px;padding:4px 8px;border-radius:8px;text-align:center;white-space:nowrap}
+.new{background:var(--new-bg);color:var(--new-fg)}.old{background:var(--old-bg);color:var(--old-fg)}
+.more{border:0;padding:4px;color:var(--muted)}
+.detail{grid-column:1/-1;display:none;background:var(--surface-2);border-radius:8px;padding:12px 14px;margin:4px 0 6px;font-size:13px}
+.row[data-open="true"] .detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.detail h4{margin:0 0 2px;font-size:11px;font-weight:500;color:var(--muted)}
+.detail p{margin:0;color:var(--text-2)}
+.detail q{font-style:italic;color:var(--text)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--text-2);margin-top:12px}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.notes{font-size:12px;color:var(--muted);margin-top:8px}
+.empty{color:var(--muted);padding:12px}
+@media (max-width:760px){
+  .grid-head{display:none}
+  .row{grid-template-columns:repeat(4,1fr) 52px 28px}
+  .row .item{grid-column:1/-1}
+  .row .tag{grid-column:1/5;justify-self:start}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dispatch priority heatmap</h1>
+  <p class="sub">Work items scored across the ping data, September interviews and support tickets (29 Jun – 7 Sep 2026). Weights are adjustable; scores recalculate live.</p>
+
+  <div class="panel">
+    <div class="controls" id="weights"></div>
+    <div class="bar">
+      <button class="chip" data-filter="all" aria-pressed="true">All</button>
+      <button class="chip" data-filter="new" aria-pressed="false">New since 4.2</button>
+      <button class="chip" data-filter="old" aria-pressed="false">Before 4.2</button>
+      <input type="search" id="q" placeholder="Search work items" aria-label="Search work items">
+      <span class="spacer"></span>
+      <button id="expand">Expand all</button>
+      <button id="collapse">Collapse all</button>
+      <button id="reset">Reset weights</button>
+    </div>
+  </div>
+
+  <div class="grid-head" id="head"></div>
+  <div id="areas"></div>
+
+  <div class="legend">
+    <span><i class="sw s1"></i>1 low</span>
+    <span><i class="sw s2"></i>2 medium</span>
+    <span><i class="sw s3"></i>3 high</span>
+    <span><i class="sw su"></i>Not asked in interviews (weight moves to support)</span>
+    <span>* Shares tickets with a higher-scoring item</span>
+  </div>
+  <p class="notes">Score = weighted average of the four columns, out of 100. Areas rank by best item, then average. Support bands: 1 = 1–5, 2 = 6–15, 3 = 16+ tickets (raw counts, repeats not yet merged). Redesign alignment is an assumption until confirmed with Sofia Marino. Not scored: Supply (24 tickets, Supply team), phone issues fixed in 4.2 (5), billing / training / other (5).</p>
+</div>
+
+<script>
+/* To add a work item: append to ITEMS with an existing or new `area`.
+   Scores are 1–3; use null for interview when the topic wasn't asked about. */
+const COLUMNS = [
+  {key:"outcomes",  label:"Outcomes",  weight:40},
+  {key:"interview", label:"Interview", weight:20},
+  {key:"support",   label:"Support",   weight:25},
+  {key:"redesign",  label:"Redesign",  weight:15}
+];
+
+const ITEMS = [
+  {area:"Who gets pinged", name:"Miss penalty + score recovery", outcomes:3, interview:3, support:3, redesign:1, era:"new", before:0, after:30,
+   evidence:"Four responders fell from ~12 pings/week to 2–3. Local responder got first ping ~80% before 4.2, 13–25% after.",
+   code:"history.py record_declined() treats missed = turned down; config.py DECLINE_PENALTY 0.12 > ACCEPTANCE_CREDIT 0.08; no decay.",
+   quote:"starting to wonder if im still even in the system.", source:"Ticket 3120 (Farlight)"},
+  {area:"Who gets pinged", name:"Local-first routing rule", outcomes:2, interview:1, support:2, shared:true, redesign:1, era:"new", before:0, after:30,
+   evidence:"Old Town first ping to local responder 61/72 before → 5/38 after, despite proximity weight going up.",
+   code:"routing.py score(): acceptance (25%) can still outrank proximity (60%) for a penalised local responder.",
+   quote:"Mite thinks Mite's been forgotten. Gale's exhausted.", source:"Kip interview"},
+  {area:"Answering in time", name:"Ping wait (60s → 90s or data-set)", outcomes:3, interview:3, support:3, redesign:1, era:"new", before:1, after:15,
+   evidence:"Missed pings 2–6/week before 4.2 → 21–38/week after. Raised by 3 of 4 interviewees.",
+   code:"config.py OFFER_TIMEOUT_SECONDS = 60 (was 90).",
+   quote:"by the time he's actually got a thumb on the screen — it's gone.", source:"Aunt Dot interview"},
+  {area:"Answering in time", name:"Handler alert: ping live / moved on", outcomes:2, interview:3, support:2, shared:true, redesign:3, era:"new", before:1, after:15,
+   evidence:"3 of 4 interviewees want to know when a ping is live or gone. No ticket asks for it directly.",
+   code:"offer.py withdraw_from_device() removes the ping silently; handler isn't notified.",
+   quote:"I heard about it after the fact, from him, not from the console", source:"Mr. Ambrose interview"},
+  {area:"Answering in time", name:"Per-responder alert sound", outcomes:1, interview:1, support:1, redesign:3, era:"old", before:1, after:1,
+   evidence:"Kip only. The 2 tickets ask for a sound per alert type, not per responder.",
+   code:"Console (not in this repo).",
+   quote:"Mite and Gale both just go \"bing\"", source:"Kip interview"},
+  {area:"Seeing what's happening", name:"Rank visibility + \"why quiet\"", outcomes:2, interview:2, support:2, shared:true, redesign:2, era:"new", before:0, after:30,
+   evidence:"\"Is X still on the list?\" tickets; Kip can't explain one quiet and one busy responder.",
+   code:"history.py keeps scores in an in-memory dict; routing.score() records no reason.",
+   quote:"might as well be two different products.", source:"Kip interview"},
+  {area:"Seeing what's happening", name:"Filter reset fix / warning", outcomes:1, interview:2, support:2, redesign:3, era:"new", before:0, after:12,
+   evidence:"Ambrose plus 12 problem tickets since 4.2: resets, shared computer, two computers, can't clear.",
+   code:"Console filter persistence — a different service (CHANGELOG).",
+   quote:"I would rather it told me than quietly reset.", source:"Ticket 3044"},
+  {area:"Console readability", name:"Bigger text / status badge", outcomes:2, interview:2, support:1, redesign:3, era:"old", before:1, after:1,
+   evidence:"Dot and Ambrose; 2 tickets. Slows noticing a live callout.",
+   code:"Console (not in this repo).",
+   quote:"I sometimes cannot tell engaged from available without leaning in.", source:"Mr. Ambrose interview"},
+  {area:"Console readability", name:"Layout + navigation fixes", outcomes:1, interview:null, support:2, redesign:3, era:"old", before:6, after:5,
+   evidence:"11 tickets: feed jumps to top, panel covers map, sorting, shortcuts, printing, tab title.",
+   code:"Console (not in this repo).",
+   quote:"the feed jumps back to the top and I lose my place.", source:"Ticket 3028"},
+  {area:"Console readability", name:"Dark mode", outcomes:1, interview:2, support:1, redesign:3, era:"old", before:2, after:2,
+   evidence:"Kip's top ask; 4 tickets, steady before and after 4.2.",
+   code:"Console (not in this repo).",
+   quote:"dark mode. I am begging.", source:"Kip interview"},
+  {area:"Console readability", name:"Capability tag legend", outcomes:1, interview:1, support:1, redesign:2, era:"old", before:1, after:1,
+   evidence:"Ambrose; 2 tickets.",
+   code:"Console (not in this repo).",
+   quote:"It sits in a drawer off the responder detail panel", source:"Mr. Ambrose interview"},
+  {area:"Platform + features", name:"Missing console features", outcomes:1, interview:null, support:2, redesign:2, era:"old", before:5, after:10,
+   evidence:"15 tickets: handover notes, leave status, history export, second sign-in, gear due-back dates.",
+   code:"Console (not in this repo).",
+   quote:"We use a paper notebook at the moment.", source:"Ticket 3008"},
+  {area:"Platform + features", name:"Account + reliability bugs", outcomes:1, interview:null, support:2, redesign:1, era:"old", before:3, after:10,
+   evidence:"13 tickets: logouts, slow password reset, slow Mondays, phone number won't save, stale map.",
+   code:"Console / platform (not in this repo).",
+   quote:"then I have to sign in again at the worst moment.", source:"Ticket 3020"}
+];
+
+const state = {filter:"all", q:"", open:{}, rowOpen:{}, weights:Object.fromEntries(COLUMNS.map(c=>[c.key,c.weight]))};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function score(it){
+  const w = {...state.weights};
+  if (it.interview == null){ w.support += w.interview; w.interview = 0; }
+  const total = COLUMNS.reduce((a,c)=>a + w[c.key], 0);
+  if (!total) return 0;
+  const sum = COLUMNS.reduce((a,c)=>a + w[c.key] * (it[c.key] ?? 0), 0);
+  return Math.round(sum / (3 * total) * 100);
+}
+
+function renderWeights(){
+  const el = document.getElementById("weights");
+  el.innerHTML = COLUMNS.map(c => `
+    <div class="ctl"><label for="w-${c.key}"><span>${c.label}</span><span id="wv-${c.key}">${state.weights[c.key]}%</span></label>
+    <input type="range" id="w-${c.key}" min="0" max="60" step="5" value="${state.weights[c.key]}"></div>`).join("");
+  COLUMNS.forEach(c => document.getElementById("w-"+c.key).addEventListener("input", e => {
+    state.weights[c.key] = +e.target.value;
+    document.getElementById("wv-"+c.key).textContent = e.target.value + "%";
+    render();
+  }));
+}
+
+function renderHead(){
+  document.getElementById("head").innerHTML =
+    `<div>Work item</div>` + COLUMNS.map(c=>`<div>${c.label}<br>${state.weights[c.key]}%</div>`).join("") +
+    `<div>Score</div><div>4.2 tickets<br>before → after</div><div></div>`;
+}
+
+function cell(v, shared){
+  if (v == null) return `<div class="cell su" title="Not asked in interviews">—</div>`;
+  return `<div class="cell s${v}">${v}${shared ? "*" : ""}</div>`;
+}
+
+function render(){
+  renderHead();
+  const q = state.q.toLowerCase();
+  const visible = ITEMS.map((it,i)=>({...it, id:i, score:score(it)}))
+    .filter(it => (state.filter === "all" || it.era === state.filter) &&
+                  (!q || (it.name + " " + it.area + " " + it.evidence).toLowerCase().includes(q)));
+  const areas = {};
+  visible.forEach(it => (areas[it.area] ??= []).push(it));
+  const list = Object.entries(areas).map(([name, items]) => {
+    items.sort((a,b) => b.score - a.score || b.outcomes - a.outcomes);
+    const best = items[0].score;
+    const avg = Math.round(items.reduce((a,b)=>a + b.score, 0) / items.length);
+    return {name, items, best, avg};
+  }).sort((a,b) => b.best - a.best || b.avg - a.avg);
+
+  const root = document.getElementById("areas");
+  if (!list.length){ root.innerHTML = `<div class="empty">No work items match.</div>`; return; }
+  root.innerHTML = list.map(a => {
+    const open = state.open[a.name] !== false;
+    return `<section class="area" data-open="${open}">
+      <button class="area-h" data-area="${esc(a.name)}" aria-expanded="${open}">
+        <span class="chev">▾</span>
+        <span><span class="area-name">${esc(a.name)}</span><br><span class="area-meta">${a.items.length} item${a.items.length>1?"s":""} · average ${a.avg}</span></span>
+        <span class="area-score" title="Best item score">${a.best}</span>
+      </button>
+      <div class="rows">${a.items.map(it => `
+        <div class="row" data-open="${!!state.rowOpen[it.id]}">
+          <div class="item"><b title="${esc(it.name)}">${esc(it.name)}</b><small>${esc(it.source)}</small></div>
+          ${COLUMNS.map(c => cell(it[c.key], c.key === "support" && it.shared)).join("")}
+          <div class="score">${it.score}</div>
+          <div class="tag ${it.era}">${it.era === "new" ? "New" : "Before"} · ${it.before} → ${it.after}</div>
+          <button class="more" data-row="${it.id}" aria-expanded="${!!state.rowOpen[it.id]}" aria-label="Show details">${state.rowOpen[it.id] ? "−" : "+"}</button>
+          <div class="detail">
+            <div><h4>Evidence</h4><p>${esc(it.evidence)}</p></div>
+            <div><h4>Where it lives</h4><p>${esc(it.code)}</p></div>
+            <div><h4>In their words</h4><p><q>${esc(it.quote)}</q><br>— ${esc(it.source)}</p></div>
+          </div>
+        </div>`).join("")}
+      </div>
+    </section>`;
+  }).join("");
+}
+
+document.getElementById("areas").addEventListener("click", e => {
+  const ah = e.target.closest(".area-h");
+  if (ah){ const n = ah.dataset.area; state.open[n] = state.open[n] === false; render(); return; }
+  const rb = e.target.closest("[data-row]");
+  if (rb){ const id = rb.dataset.row; state.rowOpen[id] = !state.rowOpen[id]; render(); }
+});
+document.querySelectorAll("[data-filter]").forEach(b => b.addEventListener("click", () => {
+  state.filter = b.dataset.filter;
+  document.querySelectorAll("[data-filter]").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+}));
+document.getElementById("q").addEventListener("input", e => { state.q = e.target.value; render(); });
+document.getElementById("expand").addEventListener("click", () => {
+  ITEMS.forEach((it,i) => { state.open[it.area] = true; state.rowOpen[i] = true; }); render();
+});
+document.getElementById("collapse").addEventListener("click", () => {
+  ITEMS.forEach(it => { state.open[it.area] = false; }); state.rowOpen = {}; render();
+});
+document.getElementById("reset").addEventListener("click", () => {
+  COLUMNS.forEach(c => state.weights[c.key] = c.weight); renderWeights(); render();
+});
+
+renderWeights();
+render();
+</script>
+</body>
+</html>
