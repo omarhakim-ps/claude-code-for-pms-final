@@ -24,6 +24,40 @@ prompt library built from your own questions.
 
 ### 1.
 
+What's contradictory or missing, not just in the company documents, but across Rook's wiki, its database, and the files in my repo?
+
 ### 2.
 
+Evaluate what are the 3 most urgent customer-facing behaviours that need resolving to improve customer confidence. Provide a concise summary of where the issues are in the code base and what needs fixing to improve customer outcomes.
+
 ### 3.
+
+Explain the terms below concisely:
+
+* Handler
+* Responder
+* Ping
+* Callout
+* Filters
+
+### 4.
+
+Provide a concise sequence of events/flow of work from incident to handler to responder
+
+### 5.
+
+You mentioned that release 4.2 made a change to the weighting of proximity, but you didn't mention if/how that impacts the top 3 customer behaviours we need to fix?
+
+### 6.
+
+Re-summarize the "top 3 customer behaviours to fix" list with the proximity considerations included where relevant
+
+### 7.
+
+I liked your suggestion about rolling out fixes area by area to validate the impact before deploying more widely. Add suggested rollout approaches and validation metrics for each fix, or just add a general section if the approach is the same for all fixes. 
+
+Keep everything concise as always.
+
+### 8.
+
+Add the rollout summary to the top 3 list
