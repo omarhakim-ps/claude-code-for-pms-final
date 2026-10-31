@@ -83,7 +83,30 @@ input[type=search]{font:inherit;font-size:13px;background:var(--surface);color:v
 .charts-legend{margin:0 0 12px}
 .chart-box{position:relative;width:100%}
 .chart-label{font-size:12px;color:var(--text-2);margin:14px 0 2px}
+.fix-head,.fix{display:grid;grid-template-columns:28px minmax(0,1.1fr) 104px minmax(0,1.1fr) minmax(0,1.4fr) minmax(0,1.4fr);gap:12px}
+.fix-head{font-size:11px;color:var(--muted);padding:0 12px 6px}
+.fix{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;font-size:13px}
+.fix b{font-weight:500}
+.fix-n{font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.fix code,.notes-list code{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-2);overflow-wrap:anywhere}
+.fix span[data-l]::before{display:none;content:attr(data-l);font-size:11px;color:var(--muted)}
+.fix-tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:8px;background:var(--surface-2);color:var(--text-2)}
+.fix-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.notes-list{margin:6px 0 0;padding-left:18px;color:var(--text-2);font-size:13px}
+.notes-list li{margin-bottom:4px}
+.model-result{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.model-result th{font-size:11px;font-weight:400;color:var(--muted);text-align:right;padding:4px 8px}
+.model-result td{text-align:right;padding:6px 8px;border-top:.5px solid var(--border)}
+.model-result th:first-child,.model-result td:first-child{text-align:left;padding-left:0}
+.model-result td:last-child{font-weight:500}
+.ctl small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.check{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--text-2)}
+.warn{font-size:13px;color:var(--text-2);margin:0 0 12px}
 @media (max-width:760px){
+  .fix-head{display:none}
+  .fix{grid-template-columns:28px minmax(0,1fr)}
+  .fix>span:nth-child(n+3){grid-column:2}
+  .fix span[data-l]::before{display:block}
   .grid-head{display:none}
   .row{grid-template-columns:repeat(4,1fr) 52px 28px}
   .row .item{grid-column:1/-1}
@@ -97,6 +120,8 @@ input[type=search]{font:inherit;font-size:13px;background:var(--surface);color:v
   <div class="tabs" role="tablist" aria-label="Page views">
     <button class="tab" role="tab" id="tab-heatmap" aria-controls="view-heatmap" aria-selected="true">Priority heatmap</button>
     <button class="tab" role="tab" id="tab-charts" aria-controls="view-charts" aria-selected="false">Responder charts</button>
+    <button class="tab" role="tab" id="tab-fixes" aria-controls="view-fixes" aria-selected="false">Fix plan</button>
+    <button class="tab" role="tab" id="tab-model" aria-controls="view-model" aria-selected="false">Parameter model</button>
   </div>
 
   <div id="view-heatmap" role="tabpanel" aria-labelledby="tab-heatmap">
@@ -133,6 +158,99 @@ input[type=search]{font:inherit;font-size:13px;background:var(--surface);color:v
     <p class="sub">One responder for each customer outcome, every week from 29 Jun to 6 Sep 2026. Farlight shows pings shifting away; Ironvale shows missed pings going up.</p>
     <div id="chart-panels"></div>
     <p class="notes">Week labels are the Monday each week starts. 100% is the responder's average week over the six full weeks before the 4.2 week. A ping is in-area when the callout's area matches the responder's area. Scores are the recent-acceptance score, reconstructed from the routing rules (+0.08 taken, −0.12 turned down or missed, limits 0–1) because no score history is stored; bars show every value the score could have had, and the gray line marks the 0.5 starting score.</p>
+  </div>
+
+  <div id="view-fixes" role="tabpanel" aria-labelledby="tab-fixes" hidden>
+    <p class="sub">Proposed fixes in rollout order, each shipped on its own so its effect can be measured separately. "Now" is the three full weeks from 17 Aug 2026. Nothing here has been built or tested.</p>
+    <div class="fix-head"><div>#</div><div>Fix</div><div>Goal</div><div>Where</div><div>How</div><div>What to measure</div></div>
+    <div id="fix-list"></div>
+    <div class="fix-cols">
+      <div class="panel">
+        <p class="charts-head">Why this order</p>
+        <ul class="notes-list">
+          <li><b>Alert first:</b> it doesn't touch ranking, so it fixes the silent failure without muddying later measurements.</li>
+          <li><b>Wait before penalty:</b> fixing the wait should remove most misses; the penalty change then shows what it adds on its own.</li>
+          <li><b>Penalty before recovery:</b> otherwise misses keep pushing down the scores being restored.</li>
+          <li><b>Recovery before local routing:</b> this shows how much of the local-calls problem recovery solves, so step 7 only fixes what's left.</li>
+          <li><b>Retry and widening last:</b> both add pings, which would blur earlier results.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <p class="charts-head">Where to look in step 5</p>
+        <ul class="notes-list">
+          <li>The real 4.2 release diff and production settings; this repo has one commit.</li>
+          <li><code>available_for</code> and <code>callout.region</code>: who is on the list.</li>
+          <li><code>travel_time_minutes</code>: did estimates change around 12 Aug?</li>
+          <li><code>score()</code>, replayed with old and new weights, and the 45-minute cutoff.</li>
+          <li><code>_scores</code>: how production stores it, and whether it reset at release.</li>
+          <li><code>push_to_device</code>, then the phone app: why out-of-area pings started being taken.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <p class="charts-head">Before starting</p>
+        <ul class="notes-list">
+          <li>Agree the miss penalty and recovery speed with Wen.</li>
+          <li>Widening the search needs a product decision; it overlaps with mutual aid on the Q4 list.</li>
+          <li>Tell Supply before any routing change.</li>
+          <li>Settings ship globally each month, so these are before/after comparisons unless a per-area switch is built.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <p class="charts-head">Watch throughout</p>
+        <ul class="notes-list">
+          <li>Time to fill a callout: a longer wait delays the next ping.</li>
+          <li>Acceptance: 66–73% back to 75–78%.</li>
+          <li>Tickets: 20–32 a week back to about 6–7.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-model" role="tabpanel" aria-labelledby="tab-model" hidden>
+    <p class="sub">A rough projection for discussing settings with Wen, calibrated to the before-4.2 and after-4.2 ping data. It is not a forecast: answer times aren't recorded, so the curve between 60s and 90s is assumed.</p>
+    <div class="panel">
+      <div class="bar" style="margin:0 0 14px" id="model-presets">
+        <button class="chip" data-preset="current" aria-pressed="true">Current 4.2 settings</button>
+        <button class="chip" data-preset="before" aria-pressed="false">Before 4.2 settings</button>
+        <button class="chip" data-preset="waitOnly" aria-pressed="false">Ping wait fix only</button>
+        <button class="chip" data-preset="recoverOnly" aria-pressed="false">Recovery only</button>
+        <button class="chip" data-preset="proposed" aria-pressed="false">Proposed fixes</button>
+      </div>
+      <div class="controls" id="model-controls"></div>
+      <div class="bar"><label class="check"><input type="checkbox" id="model-retry"> Retry missed pings once at the end of the list</label></div>
+    </div>
+    <div class="panel">
+      <p class="charts-head">Projected result after 12 weeks</p>
+      <table class="model-result"><thead><tr><th scope="col">Measure</th><th scope="col">Before 4.2</th><th scope="col">After 4.2</th><th scope="col">Projected</th></tr></thead><tbody id="model-table"></tbody></table>
+      <p class="notes" id="model-read"></p>
+    </div>
+    <div class="panel">
+      <p class="charts-head">Ping rates by ping wait</p>
+      <div class="legend charts-legend" id="model-legend"></div>
+      <div class="chart-box" style="height:280px"><canvas id="model-rates" role="img" aria-label="Projected shares of pings taken and missed, and callouts filled, at ping waits from 30 to 120 seconds. The table above gives the values at the selected settings."></canvas></div>
+    </div>
+    <div class="fix-cols">
+      <div class="panel">
+        <p class="charts-head">Seconds lost to failed pings, per filled callout</p>
+        <div class="chart-box" style="height:220px"><canvas id="model-time" role="img" aria-label="Projected seconds lost to failed pings per filled callout at ping waits from 30 to 120 seconds."></canvas></div>
+      </div>
+      <div class="panel">
+        <p class="charts-head">Quiet responder's score by week</p>
+        <div class="chart-box" style="height:220px"><canvas id="model-score" role="img" aria-label="Projected score of a quiet responder over 12 weeks starting from 0, with a reference line at 0.5."></canvas></div>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="charts-head">What the model assumes</p>
+      <ul class="notes-list">
+        <li><b>Misses:</b> two observed points per group: 90s and 60s. Quiet four 2.9% and 64% (only 25 pings); everyone else 2.1% and 12.4%. Between and beyond them the curve is assumed; dashed lines mark extrapolation outside 60–90s.</li>
+        <li><b>"Misses caused by the wait":</b> sets how much of the rise goes away with a longer wait. It's unproven, which is why step 1 logs answer times.</li>
+        <li><b>Who gets pinged:</b> the quiet four's share of pings runs from 5% at score 0 to 28% when level with a rival at 0.9, based on the ranking formula's travel-time trade-off. That straight line is assumed.</li>
+        <li><b>Starting point:</b> every preset starts from today, with the quiet four at score 0 and 5% of pings. "Before 4.2 settings" therefore shows the old settings applied now, not the period before 4.2.</li>
+        <li><b>Answers:</b> 79% of answered pings are taken, as in both periods. Taken pings have no recorded answer time, so "seconds lost" counts only failed pings.</li>
+        <li><b>Unfilled callouts:</b> 5.3% end on a turn-down whatever the settings; those ending on a miss scale with the miss rate. A retry succeeds at the same rate as any other ping.</li>
+        <li><b>Not modelled:</b> the out-of-area jump, because its cause is unknown, so local-call rates aren't projected. Also holiday or callout volume changes.</li>
+      </ul>
+    </div>
   </div>
 </div>
 
@@ -413,16 +531,209 @@ function drawCharts(){
   RESPONDERS.forEach(r => { outcomeChart(r); areaChart(r); scoreChart(r); });
 }
 
+/* Fix plan. To change a step, edit FIXES; the list renders in array order. */
+const FIXES = [
+  { fix:"Add measurement", goal:"All", where:"offer.py:43, offer.py:31, history.py:42", how:"Log answer time, score changes, list length and how each callout ended.", measure:"Recorded for every ping, with 2 weeks of baseline." },
+  { fix:"Alert when a callout goes unfilled", goal:"No silent endings", where:"offer.py:31", how:"Alert the handler or console when the list runs out. First check whether the caller handles None.", measure:"Every unfilled callout alerted within a set time." },
+  { fix:"Restore the ping wait", goal:"Fewer misses", where:"config.py:9", how:"Go back to 90s, or use a value based on answer times.", measure:"Pings missed 15% → 2–3%; misses 24 → 2–6 a week." },
+  { fix:"Reduce the miss penalty", goal:"Fairer penalty", where:"offer.py:30, history.py:35, config.py:19", how:"Add record_missed with its own smaller penalty, e.g. 0.04.", measure:"A miss costs a third of a turn-down; nobody reaches 0 from misses alone." },
+  { fix:"Find the out-of-area cause", goal:"Local calls", where:"availability.py:12, availability.py:21, routing.py:30, 4.2 release diff", how:"Replay callouts with old and new weights and real travel times.", measure:"Cause confirmed, and fix defined with Wen." },
+  { fix:"Add time-based score recovery", goal:"Score recovery, local calls", where:"history.py:20, history.py:30", how:"Ease low scores up to 0.5 over about 4 weeks, only while marked available.", measure:"Nobody available stays below 0.5 beyond 4 weeks; quiet four's pings 8 → about 40+ a week." },
+  { fix:"Fix local routing", goal:"Local calls", where:"Depends on step 5", how:"Depends on step 5.", measure:"First pings in-area 64% → about 80%; out-of-area pings 62 → about 30 a week." },
+  { fix:"Retry missed pings once", goal:"No silent endings", where:"offer.py:25, offer.py:31", how:"Re-ping anyone who missed, never turn-downs, with no points lost.", measure:"Unfilled callouts 10.8% → 5% or lower; share of retries taken." },
+  { fix:"Widen the search", goal:"No silent endings", where:"routing.py:24, offer.py:31", how:"Last resort after the alert and retry, with pings labelled separately and no points lost.", measure:"Share of widened pings taken, excluded from the local-calls metric." }
+];
+
+document.getElementById("fix-list").innerHTML = FIXES.map((f, i) => `
+  <div class="fix">
+    <span class="fix-n">${i + 1}</span>
+    <span><b>${f.fix}</b></span>
+    <span data-l="Goal"><i class="fix-tag" style="font-style:normal">${f.goal}</i></span>
+    <span data-l="Where"><code>${f.where}</code></span>
+    <span data-l="How">${f.how}</span>
+    <span data-l="What to measure">${f.measure}</span>
+  </div>`).join("");
+
+/* Parameter model. Calibration points come from the pings table: six full weeks
+   before the 4.2 week, and three full weeks from 17 Aug. Everything else is an
+   assumption, listed on the tab. */
+const OBS = {
+  missOther:{ at90:.0205, at60:.124 }, missQuiet:{ at90:.029, at60:.64 },
+  takenOfAnswered:.79, turnDownSeconds:23, failedPerTaken:.74,
+  quietShareNormal:.284, quietShareNow:.052, quietShareFloor:.02, quietResponders:4,
+  pingsPerWeek:165, rivalScore:.9, minutesAtNow:16.875,
+  unfilledTurnDown:.053, unfilledMissAtPre:.0024, missAtPre:.023, unfilledMissSlope:.359
+};
+const SLIDERS = [
+  { key:"wait", label:"Ping wait", min:30, max:120, step:5, fmt:v => v + "s" },
+  { key:"missPenalty", label:"Miss penalty", min:0, max:.12, step:.01, fmt:v => v.toFixed(2) },
+  { key:"recovery", label:"Weeks to recover 0 to 0.5", min:0, max:12, step:1, fmt:v => v ? v + " weeks" : "Off" },
+  { key:"proximity", label:"Proximity weight", min:.3, max:.8, step:.05, fmt:v => v.toFixed(2) },
+  { key:"acceptance", label:"Recent-acceptance weight", min:.1, max:.5, step:.05, fmt:v => v.toFixed(2) },
+  { key:"attribution", label:"Misses caused by the wait (assumption)", min:0, max:100, step:10, fmt:v => v + "%" }
+];
+const PRESETS = {
+  current:{ wait:60, missPenalty:.12, recovery:0, proximity:.6, acceptance:.25, retry:false },
+  before:{ wait:90, missPenalty:.12, recovery:0, proximity:.45, acceptance:.4, retry:false },
+  waitOnly:{ wait:90, missPenalty:.12, recovery:0, proximity:.6, acceptance:.25, retry:false },
+  recoverOnly:{ wait:60, missPenalty:.12, recovery:4, proximity:.6, acceptance:.25, retry:false },
+  proposed:{ wait:90, missPenalty:.04, recovery:4, proximity:.6, acceptance:.25, retry:true }
+};
+const model = { attribution:100, ...PRESETS.current };
+let modelCharts = null;
+
+function missRate(group, wait){
+  const curve = Math.min(1, group.at90 * Math.pow(group.at60 / group.at90, (90 - wait) / 30));
+  const a = model.attribution / 100;
+  return Math.min(1, a * curve + (1 - a) * group.at60);
+}
+
+function quietShare(score){
+  const minutes = Math.max(0, OBS.rivalScore - score) * model.acceptance / (model.proximity / 45);
+  const perMinute = (OBS.quietShareNormal - OBS.quietShareNow) / OBS.minutesAtNow;
+  return Math.max(OBS.quietShareFloor, OBS.quietShareNormal - perMinute * minutes);
+}
+
+/* Follows one quiet responder from score 0, week by week. */
+function project(wait){
+  const miss = missRate(OBS.missQuiet, wait), answered = 1 - miss;
+  const weekly = model.recovery ? .5 / model.recovery : 0;
+  const scores = [0];
+  let s = 0;
+  for (let wk = 1; wk <= 12; wk++){
+    const pings = quietShare(s) * OBS.pingsPerWeek / OBS.quietResponders;
+    s += pings * (answered * OBS.takenOfAnswered * .08 - answered * (1 - OBS.takenOfAnswered) * .12 - miss * model.missPenalty);
+    s = Math.max(0, Math.min(1, s));
+    if (s < .5) s = Math.min(.5, s + weekly);
+    scores.push(s);
+  }
+  return scores;
+}
+
+function outcomes(wait){
+  const scores = project(wait), share = quietShare(scores[12]);
+  const miss = share * missRate(OBS.missQuiet, wait) + (1 - share) * missRate(OBS.missOther, wait);
+  const answered = 1 - miss, taken = answered * OBS.takenOfAnswered, turnedDown = answered - taken;
+  let endedOnMiss = Math.max(0, OBS.unfilledMissAtPre + (miss - OBS.missAtPre) * OBS.unfilledMissSlope);
+  if (model.retry) endedOnMiss *= 1 - answered * OBS.takenOfAnswered;
+  const failedSeconds = (miss * (wait + 2) + turnedDown * OBS.turnDownSeconds) / (miss + turnedDown);
+  return { scores, share, miss, answered, taken, filled:1 - OBS.unfilledTurnDown - endedOnMiss,
+    lost:OBS.failedPerTaken * (1 - taken) / taken * failedSeconds };
+}
+
+function drawModel(){
+  const dark = isDark();
+  const col = dark ? ["#3987e5","#d95926","#008300"] : ["#2a78d6","#eb6834","#008300"];
+  const scoreCol = dark ? "#9085e9" : "#6250d6";
+  const grid = dark ? "#2c2c2a" : "#e1e0d9", base = dark ? "#383835" : "#c3c2b7";
+  const muted = "#898781", sec = dark ? "#c3c2b7" : "#52514e", surface = dark ? "#1c1c1b" : "#ffffff";
+  const WAITS = []; for (let w = 30; w <= 120; w += 5) WAITS.push(w);
+  const LINES = [["Taken","taken"],["Missed","miss"],["Callouts filled","filled"]];
+
+  document.getElementById("model-legend").innerHTML = LINES.map((l, i) => `<span><i class="sw" style="background:${col[i]}"></i>${l[0]}</span>`).join("")
+    + `<span><i class="sw" style="background:transparent;border:2px solid ${muted}"></i>Observed at 60s and 90s</span><span>Dashed: outside the observed 60–90s</span>`;
+
+  const dashed = { borderDash:c => (c.p0.parsed.x < 60 || c.p1.parsed.x > 90) ? [5, 4] : undefined };
+  const cursor = { id:"cursor", afterDatasetsDraw(ch){
+    const { ctx, scales:{x}, chartArea:a } = ch, xp = x.getPixelForValue(model.wait);
+    ctx.save(); ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(xp, a.top); ctx.lineTo(xp, a.bottom); ctx.stroke();
+    ctx.fillStyle = sec; ctx.font = "12px sans-serif"; ctx.textAlign = xp > a.right - 70 ? "right" : "left";
+    ctx.fillText(model.wait + "s", xp + (xp > a.right - 70 ? -6 : 6), a.top + 10); ctx.restore();
+  }};
+  const endLabels = { id:"endLabels", afterDatasetsDraw(ch){
+    const { ctx } = ch; ctx.save(); ctx.font = "12px sans-serif"; ctx.fillStyle = sec; ctx.textAlign = "left";
+    LINES.forEach((l, i) => { const p = ch.getDatasetMeta(i).data[WAITS.length - 1]; if (p) ctx.fillText(l[0], p.x + 8, p.y + 4); });
+    ctx.restore();
+  }};
+  const line = (label, color) => ({ label, data:[], borderColor:color, backgroundColor:color, borderWidth:2, tension:.25, pointRadius:0, pointHitRadius:12, pointHoverRadius:5, segment:dashed });
+  const xAxis = { type:"linear", min:30, max:120, grid:{display:false}, border:{color:base}, ticks:{color:muted, font:{size:11}, stepSize:15, callback:v => v + "s"} };
+  const tip = { mode:"index", intersect:false };
+
+  const observed = (data, color) => ({ type:"scatter", label:"Observed", data, borderColor:color, backgroundColor:surface, borderWidth:2, pointRadius:5, pointHoverRadius:6 });
+  const rates = new Chart(document.getElementById("model-rates"), { type:"line", plugins:[cursor, endLabels],
+    data:{ datasets:[ line("Taken", col[0]), line("Missed", col[1]), line("Callouts filled", col[2]),
+      observed([{x:90,y:76.8},{x:60,y:68.5}], col[0]), observed([{x:90,y:2.3},{x:60,y:15.1}], col[1]), observed([{x:90,y:94.9},{x:60,y:89.2}], col[2]) ] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, interaction:tip, layout:{padding:{right:100}},
+      plugins:{ legend:{display:false}, tooltip:{ filter:i => i.datasetIndex < 3, callbacks:{ title:i => "Ping wait " + i[0].parsed.x + "s", label:i => i.dataset.label + ": " + i.parsed.y.toFixed(1) + "%" } } },
+      scales:{ x:xAxis, y:{min:0, max:100, grid:{color:grid}, border:{display:false}, ticks:{color:muted, font:{size:11}, stepSize:25, callback:v => v + "%"}} } } });
+
+  const time = new Chart(document.getElementById("model-time"), { type:"line", plugins:[cursor],
+    data:{ datasets:[ line("Seconds lost", col[0]) ] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, interaction:tip,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ title:i => "Ping wait " + i[0].parsed.x + "s", label:i => i.parsed.y.toFixed(1) + " seconds" } } },
+      scales:{ x:xAxis, y:{min:0, grid:{color:grid}, border:{display:false}, ticks:{color:muted, font:{size:11}}} } } });
+
+  const refLine = { id:"refLine", afterDatasetsDraw(ch){
+    const { ctx, scales:{y}, chartArea:a } = ch, yp = y.getPixelForValue(.5);
+    ctx.save(); ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a.left, yp); ctx.lineTo(a.right, yp); ctx.stroke();
+    ctx.fillStyle = sec; ctx.font = "12px sans-serif"; ctx.fillText("0.5 starting score", a.left + 6, yp - 6); ctx.restore();
+  }};
+  const score = new Chart(document.getElementById("model-score"), { type:"line", plugins:[refLine],
+    data:{ labels:[...Array(13).keys()], datasets:[{ label:"Score", data:[], borderColor:scoreCol, backgroundColor:scoreCol, borderWidth:2, tension:.25, pointRadius:0, pointHitRadius:12, pointHoverRadius:5 }] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, interaction:tip,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ title:i => "Week " + i[0].label, label:i => "Score " + i.parsed.y.toFixed(2) } } },
+      scales:{ x:{grid:{display:false}, border:{color:base}, ticks:{color:muted, font:{size:11}, maxRotation:0, callback:function(v){ return v % 3 === 0 ? "Wk " + v : ""; }}},
+        y:{min:0, max:1, grid:{color:grid}, border:{display:false}, ticks:{color:muted, font:{size:11}, stepSize:.5, callback:v => v.toFixed(1)}} } } });
+
+  modelCharts = { rates, time, score, WAITS };
+  updateModel();
+}
+
+function updateModel(){
+  SLIDERS.forEach(s => {
+    document.getElementById("model-" + s.key).value = model[s.key];
+    document.getElementById("model-" + s.key + "-v").textContent = s.fmt(model[s.key]);
+  });
+  document.getElementById("model-retry").checked = model.retry;
+  const r = outcomes(model.wait), pct = v => (v * 100).toFixed(1) + "%";
+  document.getElementById("model-table").innerHTML = [
+    ["Pings answered", "97.7%", "84.9%", pct(r.answered)],
+    ["Pings taken", "76.8%", "68.5%", pct(r.taken)],
+    ["Pings missed", "2.3%", "15.1%", pct(r.miss)],
+    ["Callouts filled", "94.9%", "89.2%", pct(r.filled)],
+    ["Seconds lost per filled callout (estimate)", "about 7", "about 14", r.lost.toFixed(0)],
+    ["Quiet four's share of pings", "28%", "5%", Math.round(r.share * 100) + "%"],
+    ["Quiet responder's score", "0.84–1.00", "0", r.scores[12].toFixed(2)]
+  ].map(row => `<tr>${row.map(c => `<td>${c}</td>`).join("")}</tr>`).join("");
+  document.getElementById("model-read").textContent = model.wait < 60 || model.wait > 90
+    ? "This ping wait is outside the observed 60–90s, so treat the projection as a guess."
+    : "Before and after figures are observed, except seconds lost. Projected figures assume the settings hold for 12 weeks.";
+  if (!modelCharts) return;
+  const { rates, time, score, WAITS } = modelCharts, all = WAITS.map(w => ({ w, o:outcomes(w) }));
+  ["taken","miss","filled"].forEach((k, i) => { rates.data.datasets[i].data = all.map(d => ({ x:d.w, y:d.o[k] * 100 })); });
+  time.data.datasets[0].data = all.map(d => ({ x:d.w, y:d.o.lost }));
+  score.data.datasets[0].data = r.scores;
+  rates.update("none"); time.update("none"); score.update("none");
+}
+
+function markPreset(name){
+  document.querySelectorAll("#model-presets .chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.preset === name)));
+}
+
+document.getElementById("model-controls").innerHTML = SLIDERS.map(s => `
+  <div class="ctl"><label for="model-${s.key}"><span>${s.label}</span><span id="model-${s.key}-v"></span></label>
+  <input type="range" id="model-${s.key}" min="${s.min}" max="${s.max}" step="${s.step}"></div>`).join("");
+SLIDERS.forEach(s => document.getElementById("model-" + s.key).addEventListener("input", e => {
+  model[s.key] = Number(e.target.value); markPreset(null); updateModel();
+}));
+document.getElementById("model-retry").addEventListener("change", e => { model.retry = e.target.checked; markPreset(null); updateModel(); });
+document.getElementById("model-presets").addEventListener("click", e => {
+  const name = e.target.dataset.preset;
+  if (!name) return;
+  Object.assign(model, PRESETS[name]); markPreset(name); updateModel();
+});
+updateModel();
+
 function showTab(name){
-  ["heatmap","charts"].forEach(n => {
+  ["heatmap","charts","fixes","model"].forEach(n => {
     document.getElementById("tab-" + n).setAttribute("aria-selected", String(n === name));
     document.getElementById("view-" + n).hidden = n !== name;
   });
   if (name === "charts" && !drawn){ drawn = true; drawCharts(); }
+  if (name === "model" && !modelCharts) drawModel();
 }
 
-document.getElementById("tab-heatmap").addEventListener("click", () => showTab("heatmap"));
-document.getElementById("tab-charts").addEventListener("click", () => showTab("charts"));
+["heatmap","charts","fixes","model"].forEach(n => document.getElementById("tab-" + n).addEventListener("click", () => showTab(n)));
 })();
 </script>
 </body>
