@@ -29,3 +29,15 @@ For each of these customer outcomes, pick one user (for each) where ping an supp
 
 * Ping volumes have shifted towards a subset of users and away from others
 * Missed pings have gone up
+
+### 4.
+
+find a way standardize both charts against the same y-axis metric
+
+### 5.
+
+Add to both charts their responder scores
+
+### 6.
+
+Is it possible to visually factor in the in-area/out-of-area callout types in the chart
