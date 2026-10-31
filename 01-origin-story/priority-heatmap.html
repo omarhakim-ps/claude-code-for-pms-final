@@ -75,6 +75,14 @@ input[type=search]{font:inherit;font-size:13px;background:var(--surface);color:v
 .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
 .notes{font-size:12px;color:var(--muted);margin-top:8px}
 .empty{color:var(--muted);padding:12px}
+.tabs{display:flex;gap:4px;border-bottom:.5px solid var(--border-strong);margin:0 0 20px}
+.tab{border:0;border-bottom:2px solid transparent;border-radius:0;padding:8px 12px;color:var(--text-2)}
+.tab:hover{background:transparent;color:var(--text)}
+.tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent);font-weight:500}
+.charts-head{font-size:15px;font-weight:500;margin:0 0 2px}
+.charts-legend{margin:0 0 12px}
+.chart-box{position:relative;width:100%}
+.chart-label{font-size:12px;color:var(--text-2);margin:14px 0 2px}
 @media (max-width:760px){
   .grid-head{display:none}
   .row{grid-template-columns:repeat(4,1fr) 52px 28px}
@@ -86,6 +94,12 @@ input[type=search]{font:inherit;font-size:13px;background:var(--surface);color:v
 <body>
 <div class="wrap">
   <h1>Dispatch priority heatmap</h1>
+  <div class="tabs" role="tablist" aria-label="Page views">
+    <button class="tab" role="tab" id="tab-heatmap" aria-controls="view-heatmap" aria-selected="true">Priority heatmap</button>
+    <button class="tab" role="tab" id="tab-charts" aria-controls="view-charts" aria-selected="false">Responder charts</button>
+  </div>
+
+  <div id="view-heatmap" role="tabpanel" aria-labelledby="tab-heatmap">
   <p class="sub">Work items scored across the ping data, September interviews and support tickets (29 Jun – 7 Sep 2026). Weights are adjustable; scores recalculate live.</p>
 
   <div class="panel">
@@ -113,6 +127,13 @@ input[type=search]{font:inherit;font-size:13px;background:var(--surface);color:v
     <span>* Shares tickets with a higher-scoring item</span>
   </div>
   <p class="notes">Score = weighted average of the four columns, out of 100. Areas rank by best item, then average. Support bands: 1 = 1–5, 2 = 6–15, 3 = 16+ tickets (raw counts, repeats not yet merged). Redesign alignment is an assumption until confirmed with Sofia Marino. Not scored: Supply (24 tickets, Supply team), phone issues fixed in 4.2 (5), billing / training / other (5).</p>
+  </div>
+
+  <div id="view-charts" role="tabpanel" aria-labelledby="tab-charts" hidden>
+    <p class="sub">One responder for each customer outcome, every week from 29 Jun to 6 Sep 2026. Farlight shows pings shifting away; Ironvale shows missed pings going up.</p>
+    <div id="chart-panels"></div>
+    <p class="notes">Week labels are the Monday each week starts. 100% is the responder's average week over the six full weeks before the 4.2 week. A ping is in-area when the callout's area matches the responder's area. Scores are the recent-acceptance score, reconstructed from the routing rules (+0.08 taken, −0.12 turned down or missed, limits 0–1) because no score history is stored; bars show every value the score could have had, and the gray line marks the 0.5 starting score.</p>
+  </div>
 </div>
 
 <script>
@@ -282,6 +303,127 @@ document.getElementById("reset").addEventListener("click", () => {
 
 renderWeights();
 render();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* Responder charts. Counts come from the pings, callouts and responders tables.
+   Charts are drawn the first time the tab opens, because a hidden canvas has no size. */
+(function(){
+const WEEKS = ["Jun 29","Jul 6","Jul 13","Jul 20","Jul 27","Aug 3","Aug 10","Aug 17","Aug 24","Aug 31"];
+const OUTCOMES = ["Taken","Turned down","Missed"];
+const RESPONDERS = [
+  { id:"farlight", name:"Farlight", normal:12,
+    all:[[9,9,8,9,10,8,4,0,0,0],[3,3,2,2,3,3,2,1,0,0],[0,0,1,1,0,1,4,2,1,0]],
+    inArea:[[9,9,8,9,10,8,4,0,0,0],[1,1,0,1,1,0,0,1,0,0],[0,0,0,0,0,0,2,1,0,0]],
+    outArea:[[0,0,0,0,0,0,0,0,0,0],[2,2,2,1,2,3,2,0,0,0],[0,0,1,1,0,1,2,1,1,0]],
+    scores:[[.36,1],[.64,1],[.64,1],[.64,1],[.64,1],[.52,1],[.12,.44],[0,.08],[0,0],[0,0]] },
+  { id:"ironvale", name:"Ironvale", normal:8,
+    all:[[6,5,8,6,5,7,5,6,8,9],[2,3,1,2,1,1,3,2,1,1],[0,0,0,0,1,0,1,2,2,2]],
+    inArea:[[6,5,8,6,5,7,5,4,5,5],[1,0,0,1,0,0,0,1,0,0],[0,0,0,0,0,0,1,2,0,2]],
+    outArea:[[0,0,0,0,0,0,0,2,3,4],[1,3,1,1,1,1,3,1,1,1],[0,0,0,0,1,0,0,0,2,0]],
+    scores:[[.24,1],[.28,1],[.8,1],[.76,1],[.76,1],[.88,1],[.52,.92],[.52,.92],[.64,1],[.64,1]] }
+];
+
+let drawn = false;
+
+function isDark(){
+  const theme = document.documentElement.dataset.theme;
+  return theme ? theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function drawCharts(){
+  const dark = isDark();
+  const col = dark ? ["#3987e5","#199e70","#d95926"] : ["#2a78d6","#1baf7a","#eb6834"];
+  const lite = col.map(c => c + "70");
+  const scoreCol = dark ? "#9085e9" : "#6250d6";
+  const grid = dark ? "#2c2c2a" : "#e1e0d9", base = dark ? "#383835" : "#c3c2b7";
+  const muted = "#898781", sec = dark ? "#c3c2b7" : "#52514e";
+
+  const legend = `<div class="legend charts-legend">
+    <span><i class="sw" style="background:${col[0]}"></i>Taken</span>
+    <span><i class="sw" style="background:${col[1]}"></i>Turned down</span>
+    <span><i class="sw" style="background:${col[2]}"></i>Missed</span>
+    <span><i class="sw" style="background:${col[0]}"></i><i class="sw" style="background:${lite[0]}"></i>Area chart: solid in-area, lighter out-of-area</span>
+    <span><i class="sw" style="background:${scoreCol}"></i>Score, possible range at week end</span>
+  </div>`;
+
+  document.getElementById("chart-panels").innerHTML = RESPONDERS.map(r => `
+    <div class="panel">
+      <p class="charts-head">${r.name}: 100% = ${r.normal} pings a week</p>
+      ${legend}
+      <p class="chart-label">Pings by outcome, % of a normal week</p>
+      <div class="chart-box" style="height:190px"><canvas id="${r.id}-outcome" role="img" aria-label="${r.name}'s weekly pings by outcome as a percentage of a normal week."></canvas></div>
+      <p class="chart-label">In-area and out-of-area pings by outcome, count</p>
+      <div class="chart-box" style="height:210px"><canvas id="${r.id}-area" role="img" aria-label="${r.name}'s weekly in-area and out-of-area ping counts, split by outcome."></canvas></div>
+      <p class="chart-label">Recent-acceptance score, 0–1</p>
+      <div class="chart-box" style="height:120px"><canvas id="${r.id}-score" role="img" aria-label="${r.name}'s possible score range at the end of each week."></canvas></div>
+    </div>`).join("");
+
+  const fit = a => { a.width = 44; };
+  const marker = (ref, label) => ({ id:"marker", afterDatasetsDraw(ch){
+    const { ctx, scales:{x,y}, chartArea:a } = ch;
+    const xp = (x.getPixelForValue(5) + x.getPixelForValue(6)) / 2;
+    ctx.save();
+    ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.moveTo(xp, a.top); ctx.lineTo(xp, a.bottom);
+    if (ref !== null){ const yp = y.getPixelForValue(ref); ctx.moveTo(a.left, yp); ctx.lineTo(a.right, yp); }
+    ctx.stroke();
+    if (label){ ctx.fillStyle = sec; ctx.font = "12px sans-serif"; ctx.textAlign = "left"; ctx.fillText(label, xp + 6, a.top + 10); }
+    ctx.restore();
+  }});
+  const cap = { topLeft:4, topRight:4, bottomLeft:0, bottomRight:0 };
+  const seg = (set, i) => c => { for (let k = 2; k >= 0; k--) if (set[k][c.dataIndex] > 0) return k === i ? cap : 0; return 0; };
+
+  function outcomeChart(r){
+    new Chart(document.getElementById(r.id + "-outcome"), { type:"bar", plugins:[marker(100, "4.2 ships 12 Aug")],
+      data:{ labels:WEEKS, datasets:r.all.map((d,i) => ({ label:OUTCOMES[i], data:d.map(v => v / r.normal * 100), counts:d, backgroundColor:col[i], maxBarThickness:24, borderWidth:{top:2}, borderColor:"rgba(0,0,0,0)", borderSkipped:false, borderRadius:seg(r.all, i) })) },
+      options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index", intersect:false},
+        plugins:{ legend:{display:false}, tooltip:{ filter:i => i.raw > 0, callbacks:{
+          title:i => "Week of " + i[0].label,
+          label:i => i.dataset.label + ": " + i.dataset.counts[i.dataIndex] + " pings (" + Math.round(i.raw) + "%)",
+          footer:i => { const n = i.reduce((s,t) => s + t.dataset.counts[t.dataIndex], 0); return "Total " + n + " (" + Math.round(n / r.normal * 100) + "% of normal)"; } } } },
+        scales:{ x:{stacked:true, grid:{display:false}, border:{color:base}, ticks:{display:false}},
+          y:{stacked:true, min:0, max:160, afterFit:fit, grid:{color:grid}, border:{display:false}, ticks:{color:muted, font:{size:11}, stepSize:50, callback:v => v + "%"}} } } });
+  }
+
+  function areaChart(r){
+    const mk = (set, i, stack, colors, pre) => ({ label:pre + " " + OUTCOMES[i].toLowerCase(), data:set[i], stack, backgroundColor:colors[i], maxBarThickness:20, borderWidth:{top:2}, borderColor:"rgba(0,0,0,0)", borderSkipped:false, borderRadius:seg(set, i) });
+    new Chart(document.getElementById(r.id + "-area"), { type:"bar", plugins:[marker(null)],
+      data:{ labels:WEEKS, datasets:[0,1,2].map(i => mk(r.inArea, i, "in", col, "In-area")).concat([0,1,2].map(i => mk(r.outArea, i, "out", lite, "Out-of-area"))) },
+      options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:"index", intersect:false},
+        plugins:{ legend:{display:false}, tooltip:{ filter:i => i.raw > 0, callbacks:{
+          title:i => "Week of " + i[0].label,
+          label:i => i.dataset.label + ": " + i.raw,
+          footer:i => { const s = k => i.filter(t => t.dataset.stack === k).reduce((a,t) => a + t.raw, 0); return "In-area " + s("in") + ", out-of-area " + s("out"); } } } },
+        scales:{ x:{stacked:true, grid:{display:false}, border:{color:base}, ticks:{display:false}},
+          y:{stacked:true, min:0, max:15, afterFit:fit, grid:{color:grid}, border:{display:false}, ticks:{color:muted, font:{size:11}, stepSize:5}} } } });
+  }
+
+  function scoreChart(r){
+    new Chart(document.getElementById(r.id + "-score"), { type:"bar", plugins:[marker(.5)],
+      data:{ labels:WEEKS, datasets:[{ label:"Score", data:r.scores, backgroundColor:scoreCol, maxBarThickness:24, minBarLength:4, borderRadius:4, borderSkipped:false }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{
+          title:i => "End of week of " + i[0].label,
+          label:i => { const v = r.scores[i.dataIndex]; return v[0] === v[1] ? "Score: " + v[0].toFixed(2) + " (exact)" : "Score between " + v[0].toFixed(2) + " and " + v[1].toFixed(2); } } } },
+        scales:{ x:{grid:{display:false}, border:{color:base}, ticks:{color:muted, font:{size:11}, autoSkip:false, maxRotation:0}},
+          y:{min:0, max:1, afterFit:fit, grid:{color:grid}, border:{display:false}, ticks:{color:muted, font:{size:11}, stepSize:.5, callback:v => v.toFixed(1)}} } } });
+  }
+
+  RESPONDERS.forEach(r => { outcomeChart(r); areaChart(r); scoreChart(r); });
+}
+
+function showTab(name){
+  ["heatmap","charts"].forEach(n => {
+    document.getElementById("tab-" + n).setAttribute("aria-selected", String(n === name));
+    document.getElementById("view-" + n).hidden = n !== name;
+  });
+  if (name === "charts" && !drawn){ drawn = true; drawCharts(); }
+}
+
+document.getElementById("tab-heatmap").addEventListener("click", () => showTab("heatmap"));
+document.getElementById("tab-charts").addEventListener("click", () => showTab("charts"));
+})();
 </script>
 </body>
 </html>

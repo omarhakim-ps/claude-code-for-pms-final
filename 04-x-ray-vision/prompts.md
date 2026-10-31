@@ -45,3 +45,15 @@ Is it possible to visually factor in the in-area/out-of-area callout types in th
 ### 7.
 
 Let's revert that and instead separate out the in/out of area bit onto it's own weekly chart alongside the others
+
+### 8.
+
+for the in/out of area, just do it by volume
+
+### 9.
+
+for the in/out of area, add another dimension (or do a separate chart if cleaner) to show the missed/turned down/taken metrics for in vs out of area callouts
+
+### 10.
+
+add the legend above the ironvale chart as well for easier readability. Then add the charts to the priority-heatmap.html as a separate tab.
