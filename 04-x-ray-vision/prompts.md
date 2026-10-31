@@ -17,6 +17,15 @@ prompt library built from your own questions.
 
 ### 1.
 
+Pick one responder from the pings table who went quiet. Show me every week since June: how many pings, and what they did with each. Use their name.
+
 ### 2.
 
+Why did you pick vesper
+
 ### 3.
+
+For each of these customer outcomes, pick one user (for each) where ping an support data correlate well. As a chart, show me every week since June: how many pings, and what they did with each. Use their name. Keep it concise.
+
+* Ping volumes have shifted towards a subset of users and away from others
+* Missed pings have gone up
