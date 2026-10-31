@@ -62,3 +62,32 @@ Compare the support_tickets table on rook-database against the pings table. Do t
 ### 8.
 
 How do I reconnect
+
+### 9.
+
+Give me a concise summary and focus on topline metrics
+
+### 10.
+
+So if I was to summarize:
+
+* Ping volumes have shifted to a subset of users
+   * Ping and support data agree - though support is trailing as you would expect
+* Ping misses have gone up (due to shorter ping wait and slow/non-recovering score decreases)
+   * Ping data shows this, but support data is seeing more of "I'm getting no pings at all"?
+* Unfulfilled callouts have gone up (due to lack of fallback options when responder lists run out)
+   * Ping data shows this, but support data doesn't show this at all?
+
+### 11.
+
+Let's ignore the unfulfilled callout since that's more an internal concern.
+
+Focusing on the key customer outcomes then:
+
+* Ping volume shifted away/towards from/to a subset of responders
+   * Ping and support data correlate well, albeit with support trailing as we would expect
+* Missed pings have gone up
+   * Ping and support data correlate well, albeit with support trailing as we would expect
+
+
+Is that a fair summary?
