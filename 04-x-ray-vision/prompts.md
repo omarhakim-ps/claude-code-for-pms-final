@@ -41,3 +41,7 @@ Add to both charts their responder scores
 ### 6.
 
 Is it possible to visually factor in the in-area/out-of-area callout types in the chart
+
+### 7.
+
+Let's revert that and instead separate out the in/out of area bit onto it's own weekly chart alongside the others
