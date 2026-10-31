@@ -57,3 +57,24 @@ for the in/out of area, add another dimension (or do a separate chart if cleaner
 ### 10.
 
 add the legend above the ironvale chart as well for easier readability. Then add the charts to the priority-heatmap.html as a separate tab.
+
+### 11.
+
+Review the ping and support data (where there's strong correlation) to investigate where release 4.2 went wrong. Focus on the following outcomes we've identified in previous sessions, and point out where 4.2 made undesirable changes and how to fix them, and how to best test/rollout/measure. Keep everything concise. Call out any issues that may have been preexisting.
+
+* Missed pings has increased
+* Ping volumes have shifted to subset of users
+* In/out-of-area pings have shifted as well
+* Ping scores not recovering quickly enough
+
+### 12.
+
+So to summarize:
+
+* Pre-existing issue: poor/no score recovery 
+* Root cause from 4.2: decreased ping wait times
+* Follow-on issues due to 4.2: shift in ping volumes to a subset of users
+
+### 13.
+
+Re-validate the root cause and follow-on issue against the database
