@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Release QA</title>
+<style>
+:root{color-scheme:light;--bg:#fafaf8;--card:#fff;--ink:#1d1d1b;--muted:#6b6b66;--line:#e4e3de;
+--pass:#1f7a4d;--pass-bg:#e3f3ea;--warn:#9a6200;--warn-bg:#fbf0d9;--block:#b3261e;--block-bg:#fbe4e2;
+--info:#2f5fb3;--info-bg:#e6edf9;--na:#5b5b57;--na-bg:#efefec}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);
+font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:24px;margin:0}h2{font-size:17px;margin:28px 0 10px}.sub,.note{color:var(--muted)}
+.note{font-size:13px}.sub{margin:2px 0 16px}
+.hero{background:var(--card);border:1px solid var(--line);border-left-width:6px;border-radius:10px;padding:14px 16px}
+.hero p{margin:8px 0 0}.hero.block{border-left-color:var(--block)}.hero.warn{border-left-color:var(--warn)}
+.hero.pass{border-left-color:var(--pass)}.hero.info{border-left-color:var(--info)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.pass{color:var(--pass);background:var(--pass-bg)}.warn{color:var(--warn);background:var(--warn-bg)}
+.block{color:var(--block);background:var(--block-bg)}.info{color:var(--info);background:var(--info-bg)}
+.not_yet{color:var(--na);background:var(--na-bg)}
+.hero.pass,.hero.warn,.hero.block,.hero.info{background:var(--card);color:var(--ink)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+.card .lbl{font-size:13px;color:var(--muted)}.card .dir{font-size:20px;font-weight:650;margin:2px 0}
+.dir.up{color:var(--pass)}.dir.down{color:var(--block)}.dir.none,.dir.unclear{color:var(--na)}
+.card .size{font-weight:600;font-size:13px}.card p{font-size:13px;margin:6px 0 0;color:var(--muted)}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:8px 10px;text-align:left;vertical-align:top;
+border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600;font-size:13px}td.oc{font-size:13px;color:var(--muted)}
+tr:last-child td{border-bottom:none}.new{font-size:11px;color:var(--info);font-weight:600;margin-left:4px}
+.acts li{margin:6px 0}
+</style></head><body><main>
+<header><h1>Release QA</h1><p class="sub">Upcoming release · 0 files changed since 4.2 · as of 2026-11-07</p></header>
+<section class="hero info"><span class="pill info">Info</span><p>Nothing is queued for release: the routing code is still 4.2 as shipped, and the CHANGELOG has no upcoming section. All agreed values hold; the miss penalty and the other approved changes aren&#x27;t in the code yet.</p></section>
+<h2>Projected impact on the four outcomes</h2><p class="note">Estimates from the brief's model and the 4.2 analysis, not measurements.</p><div class="cards"><div class="card"><div class="lbl">Pings answered</div><div class="dir none">&#8212; No effect</div><div class="size">No effect</div><p>No routing change queued.</p></div><div class="card"><div class="lbl">Pings taken</div><div class="dir none">&#8212; No effect</div><div class="size">No effect</div><p>No routing change queued.</p></div><div class="card"><div class="lbl">Callouts filled</div><div class="dir none">&#8212; No effect</div><div class="size">No effect</div><p>No routing change queued.</p></div><div class="card"><div class="lbl">Quiet four&#x27;s share</div><div class="dir none">&#8212; No effect</div><div class="size">No effect</div><p>No routing change queued.</p></div></div>
+<h2>Outcome levers touched</h2><div class="tw"><table><tr><th>Result</th><th>Check</th><th>What we found</th><th>Outcomes</th></tr><tr><td colspan="4" class="note">Nothing to check.</td></tr></table></div>
+<h2>Agreed fixes intact</h2><div class="tw"><table><tr><th>Result</th><th>Check</th><th>What we found</th><th>Outcomes</th></tr><tr><td><span class="pill pass">Pass</span></td><td><b>OFFER_TIMEOUT_SECONDS</b></td><td>60 (agreed 60)</td><td class="oc">Pings answered, Pings taken, Callouts filled, Quiet four&#x27;s share</td></tr><tr><td><span class="pill pass">Pass</span></td><td><b>Weights, credit, turn-down penalty, score limits, horizon</b></td><td>All as in 4.2, which the brief keeps for now.</td><td class="oc"></td></tr><tr><td><span class="pill not_yet">Not in code yet</span></td><td><b>3: miss penalty about 0.04</b></td><td>No MISS_PENALTY in config.py; a miss still costs 0.12 like a turn-down.</td><td class="oc">Quiet four&#x27;s share, Pings taken</td></tr><tr><td><span class="pill not_yet">Not in code yet</span></td><td><b>3b: no penalty for out-of-area turn-downs</b></td><td>Not in the code.</td><td class="oc">Quiet four&#x27;s share</td></tr><tr><td><span class="pill not_yet">Not in code yet</span></td><td><b>4: one-time restore to 11 Aug scores</b></td><td>Not in the code.</td><td class="oc">Quiet four&#x27;s share</td></tr><tr><td><span class="pill not_yet">Not in code yet</span></td><td><b>5: slow recovery to 0.5</b></td><td>Not in the code; the 2019 TODO in history.py is still open.</td><td class="oc">Quiet four&#x27;s share</td></tr><tr><td><span class="pill not_yet">Not in code yet</span></td><td><b>6: one retry after the next responder</b></td><td>Not in the code.</td><td class="oc">Callouts filled</td></tr><tr><td><span class="pill info">Info</span></td><td><b>1, 2 and 7: visibility, alert, tickets</b></td><td>Live outside this routing service; not visible here.</td><td class="oc">Pings answered, Pings taken</td></tr></table></div>
+<h2>Release-plan rules</h2><div class="tw"><table><tr><th>Result</th><th>Check</th><th>What we found</th><th>Outcomes</th></tr><tr><td><span class="pill info">Info</span></td><td><b>Release A and B kept apart</b></td><td>Nothing queued yet.</td><td class="oc"></td></tr><tr><td><span class="pill info">Info</span></td><td><b>Answer-time logging</b></td><td>Not in offer_to() yet. The brief says start logging now, ahead of Release A.</td><td class="oc"></td></tr></table></div>
+<h2>What was compared</h2><p class="note">Routing code at 622e3d47 (4.2 as shipped) against the working copy today. First run: this sets the baseline.</p>
+</main></body></html>

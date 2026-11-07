@@ -1,0 +1,87 @@
+{
+  "code_dir": "00-rook/code/dispatch-routing",
+  "last_shipped": "4.2",
+  "outcomes": {
+    "answered": "Pings answered",
+    "taken": "Pings taken",
+    "filled": "Callouts filled",
+    "share": "Quiet four's share of pings"
+  },
+  "levers": [
+    {
+      "id": "ping_wait",
+      "name": "Ping wait",
+      "patterns": ["OFFER_TIMEOUT_SECONDS", "deadline"],
+      "outcomes": ["answered", "taken", "filled", "share"],
+      "why": "The 90s to 60s cut in 4.2 is the strongest suspected cause: first pings missed went from 0.7% to 11.4%."
+    },
+    {
+      "id": "penalties",
+      "name": "Penalties and credit on the score",
+      "patterns": ["DECLINE_PENALTY", "MISS_PENALTY", "ACCEPTANCE_CREDIT", "record_declined", "record_accepted", "record_missed", "record_turned_down"],
+      "outcomes": ["share", "taken"],
+      "why": "Misses count like refusals today (-0.12 vs +0.08). This is what pushed the quiet four's scores to the floor."
+    },
+    {
+      "id": "score_limits",
+      "name": "Score limits, starting score and recovery",
+      "patterns": ["SCORE_FLOOR", "SCORE_CEILING", "NEUTRAL_SCORE", "_scores", "recover", "decay", "ease", "restore"],
+      "outcomes": ["share"],
+      "why": "No recovery exists today; a responder at 0 needs seven taken pings to reach 0.5."
+    },
+    {
+      "id": "ranking",
+      "name": "Ranking weights and inputs",
+      "patterns": ["WEIGHT_PROXIMITY", "WEIGHT_RECENT_ACCEPTANCE", "WEIGHT_CAPABILITY_MATCH", "PROXIMITY_HORIZON_MINUTES", "def score", "proximity_score", "capability_score", "travel_time_minutes"],
+      "outcomes": ["share", "taken", "filled"],
+      "why": "Decides who is asked first, and so how much goes to out-of-area responders, who took 0 of 178 out-of-area pings before 4.2."
+    },
+    {
+      "id": "retry",
+      "name": "Walking the list and retries",
+      "patterns": ["def dispatch", "rank_for_callout(", "return None", "retry", "second_chance"],
+      "outcomes": ["filled", "answered"],
+      "why": "Unfilled callouts rose from 5.1% to 10.8%, all from callouts ending on a miss; 35 of 40 stopped after one ping."
+    },
+    {
+      "id": "push_alert",
+      "name": "Push, alert and answer handling",
+      "patterns": ["push_to_device", "poll_device", "withdraw_from_device", "offer_to", "TAKEN", "TURNED_DOWN", "MISSED"],
+      "outcomes": ["answered", "taken"],
+      "why": "The brief relies on a harder-to-miss alert to win back the 60s miss increase."
+    },
+    {
+      "id": "list_membership",
+      "name": "Who is on the list",
+      "patterns": ["available_for", "candidates"],
+      "outcomes": ["filled", "share"],
+      "why": "Short lists are the likely cause of unfilled callouts; available_for is a stub here."
+    },
+    {
+      "id": "supply_record",
+      "name": "Availability record read by Supply",
+      "patterns": ["current_record"],
+      "outcomes": [],
+      "why": "A contract with Rook Supply. Any change to its shape needs Supply told before it ships."
+    }
+  ],
+  "agreed_constants": [
+    {"name": "OFFER_TIMEOUT_SECONDS", "expect": 60, "if_different": "block",
+     "why": "The brief keeps the 60s ping wait. Changing it also breaks measuring each release on its own."},
+    {"name": "WEIGHT_PROXIMITY", "expect": 0.60, "if_different": "warn",
+     "why": "The brief keeps the 4.2 weights for now; a change needs a product decision."},
+    {"name": "WEIGHT_RECENT_ACCEPTANCE", "expect": 0.25, "if_different": "warn",
+     "why": "The brief keeps the 4.2 weights for now; a change needs a product decision."},
+    {"name": "WEIGHT_CAPABILITY_MATCH", "expect": 0.15, "if_different": "warn",
+     "why": "The brief keeps the 4.2 weights for now; a change needs a product decision."},
+    {"name": "ACCEPTANCE_CREDIT", "expect": 0.08, "if_different": "warn",
+     "why": "The brief's projections assume a taken ping still earns +0.08."},
+    {"name": "DECLINE_PENALTY", "expect": 0.12, "if_different": "warn",
+     "why": "The brief sets the miss penalty at a third of a turn-down (0.12)."},
+    {"name": "MISS_PENALTY", "range": [0.03, 0.05], "if_missing": "not_yet", "if_different": "block",
+     "why": "Change 3: a miss costs about 0.04, a third of a turn-down."},
+    {"name": "SCORE_FLOOR", "expect": 0.0, "if_different": "warn", "why": "Projections assume scores run 0 to 1."},
+    {"name": "SCORE_CEILING", "expect": 1.0, "if_different": "warn", "why": "Projections assume scores run 0 to 1."},
+    {"name": "PROXIMITY_HORIZON_MINUTES", "expect": 45, "if_different": "warn", "why": "Changes who counts as close; not part of the brief."}
+  ]
+}

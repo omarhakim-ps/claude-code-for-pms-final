@@ -1,0 +1,43 @@
+{
+  "release_42_week": "2026-08-10",
+  "release_a": {
+    "name": "Release A: visibility, harder-to-miss alert, tickets per ping (changes 1, 2, 7)",
+    "ship_date": null
+  },
+  "release_b": {
+    "name": "Release B: miss penalty, score restore, slow recovery, one retry (changes 3-6)",
+    "ship_date": null
+  },
+  "baseline_weeks": ["2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03"],
+  "verdict_window_weeks": 3,
+  "measures": {
+    "answered": {
+      "label": "Pings answered (taken or turned down)",
+      "numerator": "answered", "denominator": "pings",
+      "expected_from": "release_a",
+      "on_track_at": 91.5, "range_low": 85.0,
+      "source": "brief.md: central 91.5%, range 85-98%"
+    },
+    "taken": {
+      "label": "Pings taken (acceptance rate)",
+      "numerator": "taken", "denominator": "pings",
+      "expected_from": "release_a",
+      "on_track_at": 72.0, "range_low": 67.0,
+      "source": "brief.md: central 72%, range 67-77%"
+    },
+    "filled": {
+      "label": "Callouts filled",
+      "numerator": "filled", "denominator": "callouts",
+      "expected_from": "release_b",
+      "on_track_at": 94.0, "range_low": 93.0,
+      "source": "brief.md: central 94.0%, range 93-95%"
+    },
+    "quiet_share": {
+      "label": "Quiet four's share of pings",
+      "numerator": "quiet_four_pings", "denominator": "pings",
+      "expected_from": "release_b",
+      "on_track_at": 27.0, "range_low": 20.0,
+      "source": "brief.md: 27% in every case; the 20% watch floor is a review assumption, not from the brief"
+    }
+  }
+}

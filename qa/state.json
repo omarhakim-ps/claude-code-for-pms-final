@@ -1,0 +1,19 @@
+{
+  "shipped_baseline": "622e3d4712b4c3f71741745125f1883481a59057",
+  "last_shipped": "4.2",
+  "baseline_set_on": "2026-11-07",
+  "last_run": "2026-11-07",
+  "file_hashes": {},
+  "constant_status": {
+    "OFFER_TIMEOUT_SECONDS": "pass",
+    "WEIGHT_PROXIMITY": "pass",
+    "WEIGHT_RECENT_ACCEPTANCE": "pass",
+    "WEIGHT_CAPABILITY_MATCH": "pass",
+    "ACCEPTANCE_CREDIT": "pass",
+    "DECLINE_PENALTY": "pass",
+    "MISS_PENALTY": "not_yet",
+    "SCORE_FLOOR": "pass",
+    "SCORE_CEILING": "pass",
+    "PROXIMITY_HORIZON_MINUTES": "pass"
+  }
+}

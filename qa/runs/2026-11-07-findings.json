@@ -1,0 +1,26 @@
+{"release_name": "Upcoming release",
+ "scope_line": "0 files changed since 4.2",
+ "as_of": "2026-11-07", "verdict": "info",
+ "summary": "Nothing is queued for release: the routing code is still 4.2 as shipped, and the CHANGELOG has no upcoming section. All agreed values hold; the miss penalty and the other approved changes aren't in the code yet.",
+ "impact": [
+  {"outcome": "answered", "direction": "none", "size": "No effect", "basis": "No routing change queued."},
+  {"outcome": "taken", "direction": "none", "size": "No effect", "basis": "No routing change queued."},
+  {"outcome": "filled", "direction": "none", "size": "No effect", "basis": "No routing change queued."},
+  {"outcome": "share", "direction": "none", "size": "No effect", "basis": "No routing change queued."}],
+ "sections": [
+  {"title": "Outcome levers touched", "checks": []},
+  {"title": "Agreed fixes intact", "checks": [
+   {"status": "pass", "name": "OFFER_TIMEOUT_SECONDS", "detail": "60 (agreed 60)", "outcomes": ["answered","taken","filled","share"]},
+   {"status": "pass", "name": "Weights, credit, turn-down penalty, score limits, horizon", "detail": "All as in 4.2, which the brief keeps for now.", "outcomes": []},
+   {"status": "not_yet", "name": "3: miss penalty about 0.04", "detail": "No MISS_PENALTY in config.py; a miss still costs 0.12 like a turn-down.", "outcomes": ["share","taken"]},
+   {"status": "not_yet", "name": "3b: no penalty for out-of-area turn-downs", "detail": "Not in the code.", "outcomes": ["share"]},
+   {"status": "not_yet", "name": "4: one-time restore to 11 Aug scores", "detail": "Not in the code.", "outcomes": ["share"]},
+   {"status": "not_yet", "name": "5: slow recovery to 0.5", "detail": "Not in the code; the 2019 TODO in history.py is still open.", "outcomes": ["share"]},
+   {"status": "not_yet", "name": "6: one retry after the next responder", "detail": "Not in the code.", "outcomes": ["filled"]},
+   {"status": "info", "name": "1, 2 and 7: visibility, alert, tickets", "detail": "Live outside this routing service; not visible here.", "outcomes": ["answered","taken"]}]},
+  {"title": "Release-plan rules", "checks": [
+   {"status": "info", "name": "Release A and B kept apart", "detail": "Nothing queued yet.", "outcomes": []},
+   {"status": "info", "name": "Answer-time logging", "detail": "Not in offer_to() yet. The brief says start logging now, ahead of Release A.", "outcomes": []}]}],
+ "actions": [],
+ "compared": "Routing code at 622e3d47 (4.2 as shipped) against the working copy today. First run: this sets the baseline.",
+ "changed_files": []}

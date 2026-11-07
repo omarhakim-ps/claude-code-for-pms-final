@@ -1,0 +1,89 @@
+{
+  "run_date": "2026-11-07",
+  "repo_head": "622e3d4712b4c3f71741745125f1883481a59057",
+  "shipped_baseline": "622e3d4712b4c3f71741745125f1883481a59057",
+  "last_shipped": "4.2",
+  "baseline_set_on": "2026-11-07",
+  "last_run": null,
+  "changed_files": [],
+  "new_since_last_run": [],
+  "reverted_since_last_run": [],
+  "uncommitted": false,
+  "constant_changes": [],
+  "lever_hits": [],
+  "agreed_constants": [
+    {
+      "name": "OFFER_TIMEOUT_SECONDS",
+      "status": "pass",
+      "detail": "60 (agreed 60)",
+      "why": "The brief keeps the 60s ping wait. Changing it also breaks measuring each release on its own.",
+      "regressed": false
+    },
+    {
+      "name": "WEIGHT_PROXIMITY",
+      "status": "pass",
+      "detail": "0.6 (agreed 0.6)",
+      "why": "The brief keeps the 4.2 weights for now; a change needs a product decision.",
+      "regressed": false
+    },
+    {
+      "name": "WEIGHT_RECENT_ACCEPTANCE",
+      "status": "pass",
+      "detail": "0.25 (agreed 0.25)",
+      "why": "The brief keeps the 4.2 weights for now; a change needs a product decision.",
+      "regressed": false
+    },
+    {
+      "name": "WEIGHT_CAPABILITY_MATCH",
+      "status": "pass",
+      "detail": "0.15 (agreed 0.15)",
+      "why": "The brief keeps the 4.2 weights for now; a change needs a product decision.",
+      "regressed": false
+    },
+    {
+      "name": "ACCEPTANCE_CREDIT",
+      "status": "pass",
+      "detail": "0.08 (agreed 0.08)",
+      "why": "The brief's projections assume a taken ping still earns +0.08.",
+      "regressed": false
+    },
+    {
+      "name": "DECLINE_PENALTY",
+      "status": "pass",
+      "detail": "0.12 (agreed 0.12)",
+      "why": "The brief sets the miss penalty at a third of a turn-down (0.12).",
+      "regressed": false
+    },
+    {
+      "name": "MISS_PENALTY",
+      "status": "not_yet",
+      "detail": "not in config.py",
+      "why": "Change 3: a miss costs about 0.04, a third of a turn-down.",
+      "regressed": false
+    },
+    {
+      "name": "SCORE_FLOOR",
+      "status": "pass",
+      "detail": "0.0 (agreed 0.0)",
+      "why": "Projections assume scores run 0 to 1.",
+      "regressed": false
+    },
+    {
+      "name": "SCORE_CEILING",
+      "status": "pass",
+      "detail": "1.0 (agreed 1.0)",
+      "why": "Projections assume scores run 0 to 1.",
+      "regressed": false
+    },
+    {
+      "name": "PROXIMITY_HORIZON_MINUTES",
+      "status": "pass",
+      "detail": "45 (agreed 45)",
+      "why": "Changes who counts as close; not part of the brief.",
+      "regressed": false
+    }
+  ],
+  "changelog_upcoming": [],
+  "diff": {},
+  "file_hashes": {}
+}
