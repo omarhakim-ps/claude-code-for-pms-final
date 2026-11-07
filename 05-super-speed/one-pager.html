@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet Responders One-Pager</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f5f1; --surface:#ffffff; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --line:#e1e0d9; --base:#c3c2b7; --s1:#2a78d6; --s2:#eb6834; --accent:#2a78d6;
+  --good:#008300; --warn:#b26b00;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121211; --surface:#1c1c1b; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --base:#383835; --s1:#3987e5; --s2:#d95926; --accent:#3987e5;
+    --good:#3fa43f; --warn:#d99a2b;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121211; --surface:#1c1c1b; --ink:#f0efec; --ink2:#c3c2b7; --muted:#898781;
+  --line:#2c2c2a; --base:#383835; --s1:#3987e5; --s2:#d95926; --accent:#3987e5;
+  --good:#3fa43f; --warn:#d99a2b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:960px;margin:0 auto;padding:32px 16px 56px}
+h1{font-size:26px;line-height:1.2;margin:0 0 4px}
+h2{font-size:17px;margin:28px 0 8px}
+h3{font-size:15px;margin:0 0 6px}
+p{margin:0 0 10px}
+.meta{color:var(--ink2);font-size:13px;margin-bottom:18px}
+.lede{font-size:16px;max-width:760px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:760px){.two,.three{grid-template-columns:1fr}}
+ul{margin:0;padding-left:18px} li{margin:0 0 6px}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--ink2);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+.note{color:var(--ink2);font-size:13px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink2);margin:4px 0 8px}
+.sw{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.sw.d{border-top-style:dashed}
+.sw.band{height:10px;border:0;border-radius:2px;opacity:.25}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.12);white-space:nowrap;display:none;z-index:2}
+.phone{font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0;color:var(--ink)}
+.phone b{display:block;font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:2px}
+details summary{cursor:pointer;color:var(--ink2);font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Bringing the quiet responders back, without a longer ping wait</h1>
+  <div class="meta">One-pager for Helen Achebe · Rook Dispatch · 7 Nov 2026 · Draft for discussion, no code changed · Clickable prototype: <a href="prototype.html">prototype.html</a></div>
+
+  <p class="lede">Since 4.2, four responders have nearly stopped getting pings. They missed a few in the first days of the 60-second wait. The system counted each miss like a refusal, their scores dropped and never came back, and their callouts went to responders further away. Nobody was told this was happening. The plan below keeps the 60s wait. It makes a ping easier to catch inside those 60 seconds, stops one bad week from becoming permanent, and shows handlers and responders where they stand.</p>
+
+  <h2>What it looks like to the people it happens to</h2>
+  <div class="two">
+    <div class="card">
+      <span class="tag">Handler · Kip</span>
+      <h3>Kip sees the imbalance before they have to file a ticket</h3>
+      <p class="note">Today: The Gale went from 13 pings a week to 21. Meteor Mite went from 11 to 1. Kip had no way to see either change.</p>
+      <ul>
+        <li><b>Live pings with Nudge.</b> "Meteor Mite has a live ping, 42s left." Three of the four handlers we interviewed asked for this.</li>
+        <li><b>Each responder's week at a glance.</b> Pings against their usual week, outcomes, ranking, and an availability switch.</li>
+        <li><b>A page per responder.</b> Their last 10 pings (the same list the responder sees), their ranking now, and their ranking over time with an 8-week projection.</li>
+        <li><b>Alerts.</b> 3 missed pings in a row, under half the usual pings for 2 weeks, unfilled callouts, and availability changes made by either Kip or the responder.</li>
+        <li><b>On Kip's phone too.</b> All of the above away from the desk. This brings forward the Q4 handler phone app, which is exploring and not staffed.</li>
+        <li><b>Report a problem.</b> Any ping can become a support ticket, and there's a general form at the bottom of each app.</li>
+      </ul>
+      <div class="phone"><b>Console · Monday digest</b>Meteor Mite: 1 ping last week (usual 11). Ranking: lower than usual, recovering. The Gale: 21 pings (usual 13), covering Meteor Mite's callouts.</div>
+    </div>
+    <div class="card">
+      <span class="tag">Responder · Farlight</span>
+      <h3>Farlight can tell a quiet week from being sidelined</h3>
+      <p class="note">Today: 12 pings a week down to 0 by 31 Aug. Their score hit the floor and the app showed nothing.</p>
+      <ul>
+        <li><b>Hard to miss.</b> A full-screen countdown that gets more urgent in the last 20 seconds, and one-tap <i>Take</i>. The wait stays 60s.</li>
+        <li><b>Second chance.</b> A missed ping on a local callout goes to the next responder, and comes back once if they don't take it.</li>
+        <li><b>"Your pings".</b> Their last 10 pings, and their standing in plain words (<i>normal</i>, <i>slightly lower</i>, <i>lower, recovering</i>) with an estimate such as <i>back to normal in about 5 weeks</i>.</li>
+        <li><b>Fair rules, spelled out.</b> A miss costs a third of a turn-down. Turning down a ping outside their area costs nothing. A low ranking drifts back over about 4 weeks while they're available, and doesn't drop while they're unavailable.</li>
+        <li><b>Report a problem.</b> The same as for Kip.</li>
+      </ul>
+      <div class="phone"><b>Phone · after a miss</b>You missed a ping at 14:02 (Uptown, structural-entry). It's been offered to the next responder. Missed pings lower your ranking a little. You're still ranked normally.</div>
+    </div>
+  </div>
+
+  <h2>The changes behind it</h2>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>#</th><th>Change</th><th>Who feels it</th><th>Fixes</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><b>Visibility:</b> live pings and Nudge, weekly balance, responder pages with ranking over time, alerts, a handler availability switch, and the "Your pings" card, on the console and both apps</td><td>Kip, Linda, Farlight</td><td>Nobody can see a responder going quiet</td></tr>
+        <tr><td>2</td><td><b>Easier to catch in 60s:</b> a full-screen countdown that gets urgent near the end, and lock-screen <i>Take</i></td><td>Responders</td><td>Pings answered, pings taken</td></tr>
+        <tr><td>3</td><td><b>Miss penalty cut</b> from −0.12 to about −0.04. No penalty for turning down a ping outside your area</td><td>Responders</td><td>One slow week sinks a responder</td></tr>
+        <tr><td>4</td><td><b>Make the four whole:</b> a one-time restore of every responder's score to its 11 Aug value</td><td>The quiet four</td><td>Share of pings</td></tr>
+        <tr><td>5</td><td><b>Slow recovery:</b> a score drifts back up to 0.5 over about 4 weeks, only while the responder is available. This settles Wen's 2019 note in the code</td><td>Everyone, long term</td><td>No way back today</td></tr>
+        <tr><td>6</td><td><b>One retry:</b> a missed first ping on a local callout comes back once if the next responder doesn't take it</td><td>Handlers, callers</td><td>Callouts filled</td></tr>
+        <tr><td>7</td><td><b>Report a problem where it happened:</b> one ticket per ping with its record attached, plus a general form</td><td>Handlers, responders, support</td><td>Tickets that lack ping details and repeat each other</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:8px">Considered and rejected: a "Seen, deciding" tap that holds the ping longer. It would be a longer wait in disguise, and since turn-downs never took more than 40s, the time goes into reaching the phone, not deciding. Routing settings ship globally, so 3–6 can't be piloted by area. They ship in a separate release from 1, 2 and 7, so each effect can be measured on its own.</p>
+  </div>
+
+  <h2>Where it gets us</h2>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Measure (all responders, weekly)</th><th class="n">Before 4.2</th><th class="n">Now</th><th class="n">Projected</th><th class="n">Range</th></tr></thead>
+      <tbody>
+        <tr><td>Pings answered (taken or turned down)</td><td class="n">97.7%</td><td class="n">84.9%</td><td class="n">91.5%</td><td class="n">85–98%</td></tr>
+        <tr><td>Pings taken (acceptance rate)</td><td class="n">≈77%</td><td class="n">66–73%</td><td class="n">72%</td><td class="n">67–77%</td></tr>
+        <tr><td>Callouts filled</td><td class="n">94.9%</td><td class="n">89.2%</td><td class="n">94.0%</td><td class="n">93–95%</td></tr>
+        <tr><td>Quiet four's share of pings</td><td class="n">28%</td><td class="n">5%</td><td class="n">27%</td><td class="n">27%*</td></tr>
+      </tbody>
+    </table>
+    <p class="note" style="margin-top:8px">The projection depends on how much of the 60s miss increase the alert and nudge changes win back: all of it (optimistic), three quarters (central) or half (pessimistic). <b>Callouts filled and the quiet four's share come back in every case.</b> Answered and taken only return to their pre-4.2 levels if the alerts work. That is why the alerts ship first and get measured.<br>*The ping share holds in all three cases, because a miss now costs less than a taken ping earns. It assumes Wen can explain and correct the jump in out-of-area first pings on 12–14 Aug (20% → 51%). Without the restore in change 4, recovery alone tops out at about 64% of a responder's usual pings.</p>
+  </div>
+
+  <h2>Projected pings for Kip's two responders and Farlight</h2>
+  <div class="legend">
+    <span><i class="sw" style="border-color:var(--s1)"></i>Pings a week</span>
+    <span><i class="sw" style="border-color:var(--s2)"></i>Pings taken</span>
+    <span><i class="sw d" style="border-color:var(--muted)"></i>Projected (central)</span>
+    <span><i class="sw band" style="background:var(--s2)"></i>Taken, pessimistic to optimistic</span>
+  </div>
+  <div class="three" id="charts"></div>
+  <p class="note" style="margin-top:6px">Actual weeks run from 29 Jun to 31 Aug (rook-database). There is no data after 6 Sep, so the projection starts in the week the changes ship, not on a calendar date. For Kip, the projection moves about 8 pings a week back from The Gale to Meteor Mite. That reverses what happened after 4.2, when roughly 8 of the 10 pings Meteor Mite lost went to The Gale.</p>
+  <details><summary>Show the chart data as a table</summary><div class="scroll" id="table"></div></details>
+
+  <h2>Before we build: open questions</h2>
+  <div class="card">
+    <ul>
+      <li><b>Wen:</b> why did out-of-area first pings jump on 12–14 Aug, before any scores fell? Does a restart reset scores to 0.5? Do we have the 11 Aug scores needed for the restore?</li>
+      <li><b>Wen:</b> should the second chance (change 6) come straight back to the responder, or only after the next responder has had it, as the prototype shows? Straight back is faster for the callout but holds everyone else up for another 60 seconds.</li>
+      <li><b>Security Policy 4.1</b> isn't in the wiki. The new cards and support tickets show callsigns, tags and ping history only, never cover identity, but they still need a review against the policy.</li>
+      <li><b>Nadia:</b> agree the ticket categories and how tickets raised from a ping are routed. One ticket per ping, with its record attached, should cut the repeated tickets support sees today.</li>
+      <li><b>Answer times aren't logged.</b> Start logging them now, so we can tell whether misses come from reaching the phone or from deciding.</li>
+      <li><b>Supply</b> reads the Availability Record and needs to hear about this before any routing change ships.</li>
+      <li><b>Sofia</b> needs to scope the console and phone work alongside the redesign. That includes the handler phone app, which is on the Q4 roadmap as exploring and not staffed.</li>
+    </ul>
+  </div>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+const ACTUAL_WEEKS=["29 Jun","6 Jul","13 Jul","20 Jul","27 Jul","3 Aug","10 Aug","17 Aug","24 Aug","31 Aug"];
+const PROJ_WEEKS=["Ship +1","+2","+3","+4","+5","+6","+7","+8"];
+/* Projection: scores restored to 0.85 at ship, miss penalty 0.04, recovery on; see proj model notes. */
+const DATA=[
+  {name:"Meteor Mite", who:"Kip · Eastgate · usual week 11",
+   pings:[11,12,10,11,12,11,10,4,2,1], taken:[7,9,6,7,9,8,4,1,0,0],
+   pPings:[10.7,11.2,11.2,11.2,11.2,11.2,11.2,11.2], pTaken:[6.2,6.5,6.5,6.5,6.5,6.5,6.5,6.5],
+   lo:[5.0,5.1,5.1,5.2,5.2,5.3,5.3,5.3], hi:[7.3,7.7,7.7,7.7,7.7,7.7,7.7,7.7]},
+  {name:"The Gale", who:"Kip · Eastgate · usual week 13",
+   pings:[13,12,13,14,13,13,15,17,20,21], taken:[10,9,10,11,11,10,9,12,14,16],
+   pPings:[13.4,13.0,13.0,13.0,13.0,13.0,13.0,13.0], pTaken:[10.4,10.1,10.1,10.1,10.1,10.1,10.1,10.1],
+   lo:[10.1,10.0,10.0,9.9,9.8,9.8,9.8,9.8], hi:[10.7,10.3,10.3,10.3,10.3,10.3,10.3,10.3]},
+  {name:"Farlight", who:"Linda Pruitt · Uptown · usual week 12",
+   pings:[12,12,11,12,13,12,10,3,1,0], taken:[9,9,8,9,10,8,4,0,0,0],
+   pPings:[11.5,12.0,12.0,12.0,12.0,12.0,12.0,12.0], pTaken:[7.2,7.5,7.5,7.5,7.5,7.5,7.5,7.5],
+   lo:[5.9,6.1,6.1,6.1,6.1,6.1,6.1,6.1], hi:[8.5,9.0,9.0,9.0,9.0,9.0,9.0,9.0]}
+];
+const W=300,H=210,M={l:28,r:8,t:10,b:26},GAP=14,YMAX=24;
+const NA=ACTUAL_WEEKS.length,NP=PROJ_WEEKS.length;
+const step=(W-M.l-M.r-GAP)/(NA+NP-1);
+const x=i=>M.l+i*step+(i>=NA?GAP:0);
+const y=v=>M.t+(H-M.t-M.b)*(1-v/YMAX);
+const path=(pts)=>pts.map((p,k)=>(k?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+const label=i=>i<NA?"Week of "+ACTUAL_WEEKS[i]:(i===NA?"Ship +1":"Ship "+PROJ_WEEKS[i-NA]);
+
+function chart(d){
+  const A=d.pings.map((v,i)=>[x(i),y(v)]), T=d.taken.map((v,i)=>[x(i),y(v)]);
+  const last=NA-1;
+  const PP=[[x(last),y(d.pings[last])],...d.pPings.map((v,i)=>[x(NA+i),y(v)])];
+  const PT=[[x(last),y(d.taken[last])],...d.pTaken.map((v,i)=>[x(NA+i),y(v)])];
+  const band="M"+d.hi.map((v,i)=>x(NA+i).toFixed(1)+" "+y(v).toFixed(1)).join(" L")+" L"+d.lo.map((v,i)=>[x(NA+i),y(v)]).reverse().map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" L")+"Z";
+  let g="";
+  [0,6,12,18,24].forEach(v=>{g+=`<line x1="${M.l}" x2="${W-M.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--${v?'line':'base'})" stroke-width="1"/><text x="${M.l-6}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`;});
+  const sx=(x(NA-1)+x(NA))/2;
+  g+=`<line x1="${sx}" x2="${sx}" y1="${M.t}" y2="${H-M.b}" stroke="var(--muted)" stroke-dasharray="2 3"/>`;
+  g+=`<text x="${sx+4}" y="${M.t+10}" font-size="10" fill="var(--muted)">changes ship</text>`;
+  [[0,"29 Jun"],[4,"27 Jul"],[8,"24 Aug"],[NA,"+1"],[NA+7,"+8"]].forEach(([i,t])=>{g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--muted)">${t}</text>`;});
+  g+=`<path d="${band}" fill="var(--s2)" opacity=".18"/>`;
+  g+=`<path d="${path(A)}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round"/>`;
+  g+=`<path d="${path(T)}" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round"/>`;
+  g+=`<path d="${path(PP)}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  g+=`<path d="${path(PT)}" fill="none" stroke="var(--s2)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  g+=`<line class="cross" x1="0" x2="0" y1="${M.t}" y2="${H-M.b}" stroke="var(--muted)" stroke-width="1" style="display:none"/>`;
+  g+=`<circle class="dp" r="4" fill="var(--s1)" stroke="var(--surface)" stroke-width="2" style="display:none"/><circle class="dt" r="4" fill="var(--s2)" stroke="var(--surface)" stroke-width="2" style="display:none"/>`;
+  g+=`<rect class="hit" x="${M.l}" y="${M.t}" width="${W-M.l-M.r}" height="${H-M.t-M.b}" fill="transparent"/>`;
+  return `<div class="card"><h3>${d.name}</h3><div class="note">${d.who}</div><div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${d.name}: weekly pings and pings taken, actual and projected">${g}</svg></div></div>`;
+}
+const root=document.getElementById("charts");
+root.innerHTML=DATA.map(chart).join("");
+const tip=document.getElementById("tip");
+[...root.querySelectorAll(".chart")].forEach((el,ci)=>{
+  const d=DATA[ci], svg=el.querySelector("svg"), cross=svg.querySelector(".cross"), dp=svg.querySelector(".dp"), dt=svg.querySelector(".dt");
+  svg.querySelector(".hit").addEventListener("mousemove",e=>{
+    const r=svg.getBoundingClientRect(), sx=(e.clientX-r.left)*W/r.width;
+    let best=0,bd=1e9; for(let i=0;i<NA+NP;i++){const dd=Math.abs(x(i)-sx); if(dd<bd){bd=dd;best=i;}}
+    const proj=best>=NA, k=best-NA;
+    const p=proj?d.pPings[k]:d.pings[best], t=proj?d.pTaken[k]:d.taken[best];
+    cross.setAttribute("x1",x(best));cross.setAttribute("x2",x(best));cross.style.display="";
+    dp.setAttribute("cx",x(best));dp.setAttribute("cy",y(p));dp.style.display="";
+    dt.setAttribute("cx",x(best));dt.setAttribute("cy",y(t));dt.style.display="";
+    tip.innerHTML=`<b>${d.name} · ${label(best)}</b><br>Pings: ${p}${proj?" (projected)":""}<br>Taken: ${t}${proj?` (range ${d.lo[k]}–${d.hi[k]})`:""}`;
+    tip.style.display="block";
+    const px=e.pageX+12, maxX=window.scrollX+document.documentElement.clientWidth-tip.offsetWidth-8;
+    tip.style.left=Math.min(px,maxX)+"px"; tip.style.top=(e.pageY-10)+"px";
+  });
+  svg.querySelector(".hit").addEventListener("mouseleave",()=>{tip.style.display="none";cross.style.display="none";dp.style.display="none";dt.style.display="none";});
+});
+const weeks=[...ACTUAL_WEEKS,...PROJ_WEEKS.map((w,i)=>i?"Ship "+w:w)];
+document.getElementById("table").innerHTML=`<table><thead><tr><th>Week</th>${DATA.map(d=>`<th class="n">${d.name} pings</th><th class="n">${d.name} taken</th>`).join("")}</tr></thead><tbody>${weeks.map((w,i)=>`<tr><td>${w}</td>${DATA.map(d=>i<NA?`<td class="n">${d.pings[i]}</td><td class="n">${d.taken[i]}</td>`:`<td class="n">${d.pPings[i-NA]}</td><td class="n">${d.pTaken[i-NA]} (${d.lo[i-NA]}–${d.hi[i-NA]})</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+</script>
+</body>
+</html>

@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiet Responders Prototype</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#eeede8; --surface:#ffffff; --surface2:#f6f5f1; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --line:#e1e0d9; --accent:#2a78d6; --accent-soft:#e6f0fb;
+  --taken:#008300; --taken-soft:#e3f2e3; --down:#52514e; --missed:#c2410c; --missed-soft:#fdece4;
+  --warn:#9a5b00; --warn-soft:#fdf3dc; --alarm:#d03a2f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+button{font:inherit;cursor:pointer}
+.top{max-width:1240px;margin:0 auto;padding:20px 16px 8px}
+.top h1{font-size:20px;margin:0 0 2px}
+.top p{margin:0;color:var(--ink2);font-size:13px}
+.controls{max-width:1240px;margin:8px auto 0;padding:0 16px}
+.controls .bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;background:var(--surface);border:1px dashed var(--muted);border-radius:10px;padding:10px 12px}
+.controls .lbl{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:5px 10px;color:var(--ink2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.stage{max-width:1600px;margin:0 auto;padding:14px 16px 48px;display:grid;grid-template-columns:minmax(560px,1fr) auto;gap:20px;align-items:start}
+.stage>section{min-width:0}
+.phones{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;position:sticky;top:12px}
+@media (max-width:1280px){.stage{grid-template-columns:1fr}.phones{position:static}}
+.hlive{background:#fff6f5;border:1px solid var(--alarm);border-radius:12px;padding:10px 12px;margin:10px 0}
+.hlive .row{display:flex;align-items:center;gap:8px}
+.hlive .dot{background:var(--alarm);animation:blink 1s infinite}
+.hlive .hsecs{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:4px}
+.hlive .btn{width:100%;margin-top:8px;padding:9px}
+.rlist{list-style:none;margin:0;padding:0}
+.rlist li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.rlist li:last-child{border-bottom:0}
+.where{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.chg{display:inline-block;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:0 6px;margin-left:6px;vertical-align:middle;letter-spacing:.02em}
+
+/* Console */
+.console{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.c-head{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface2)}
+.c-head .brand{font-weight:700}
+.c-head nav{display:flex;gap:4px;flex-wrap:wrap}
+.c-head nav span{padding:4px 10px;border-radius:6px;color:var(--ink2);font-size:13px}
+.c-head nav span.on{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.c-head .who{margin-left:auto;color:var(--ink2);font-size:13px}
+.c-body{padding:16px;display:grid;gap:14px}
+.strip{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface2)}
+.strip.live{border-color:var(--alarm);background:#fff6f5}
+.strip .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
+.strip.live .dot{background:var(--alarm);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.strip .txt{flex:1;min-width:200px}
+.strip .secs{font-variant-numeric:tabular-nums;font-weight:700}
+.prog{height:4px;background:var(--line);border-radius:2px;margin-top:8px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--alarm);width:100%}
+.alerts{display:grid;gap:8px}
+.alert{display:flex;gap:10px;align-items:flex-start;border-radius:10px;padding:10px 12px;border:1px solid}
+.alert.warn{background:var(--warn-soft);border-color:#f0d9a6}
+.alert.bad{background:var(--missed-soft);border-color:#f5c7b3}
+.alert.info{background:var(--accent-soft);border-color:#c5dbf4}
+.alert .ic{font-weight:800;width:18px;text-align:center;flex:none}
+.alert .msg{flex:1}
+.alert .msg small{display:block;color:var(--ink2)}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px}
+.card h3{font-size:14px;margin:0 0 8px}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.resp{cursor:pointer}
+tr.resp:hover td{background:var(--surface2)}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.bal{position:relative;height:14px;width:150px;max-width:100%}
+.bal .usual{position:absolute;top:0;height:14px;border:1.5px dashed var(--muted);border-radius:3px}
+.bal .now{position:absolute;top:3px;height:8px;background:var(--accent);border-radius:2px}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--taken-soft);color:var(--taken)}
+.pill.mid{background:var(--warn-soft);color:var(--warn)}
+.pill.low{background:var(--missed-soft);color:var(--missed)}
+.hist{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chip{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.chip.t{color:var(--taken);border-color:#b9dcb9}
+.chip.m{color:var(--missed);border-color:#f2c0aa}
+.chip.d{color:var(--down)}
+.digest{background:var(--surface2)}
+.drill{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:16px;padding:6px 0}
+@media (max-width:760px){.drill{grid-template-columns:1fr}}
+.drill h5{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}
+.rlegend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink2);margin:2px 0 4px}
+.rlegend i{display:inline-block;width:16px;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.rchart svg{display:block;width:100%;height:auto}
+.hint{color:var(--muted);font-size:12px}
+
+/* Phone */
+.browser{border:1px solid #cfcdc5;border-radius:12px;overflow:hidden;background:#e8e6e0;box-shadow:0 10px 30px rgba(0,0,0,.14)}
+.b-bar{display:flex;align-items:center;gap:12px;padding:8px 12px;background:#e8e6e0;border-bottom:1px solid #d6d4cc}
+.b-bar .dots{display:flex;gap:6px;flex:none}
+.b-bar .dots i{width:11px;height:11px;border-radius:50%;background:#ff5f57}
+.b-bar .dots i:nth-child(2){background:#febc2e}
+.b-bar .dots i:nth-child(3){background:#28c840}
+.b-url{flex:1;min-width:0;background:#fff;border-radius:6px;padding:3px 10px;font-size:12px;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.browser .console{border:0;border-radius:0;box-shadow:none}
+.c-head{flex-wrap:wrap;row-gap:6px}
+.c-head .brand,.c-head .who,.c-head .btn{white-space:nowrap}
+.phone{width:300px;height:640px;border-radius:44px;background:#111;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.phone.shake{animation:shake .5s 2}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px) rotate(-1deg)}40%{transform:translateX(7px) rotate(1deg)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;background:var(--surface2);display:flex;flex-direction:column}
+.status{display:flex;justify-content:space-between;padding:12px 22px 4px;font-size:12px;font-weight:600}
+.app{flex:1;overflow-y:auto;padding:6px 14px 16px}
+.app h2{font-size:20px;margin:4px 0 2px}
+.avail{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0}
+.toggle{flex:none;width:46px;height:28px;border-radius:14px;border:0;background:#c3c2b7;position:relative;padding:0}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle[aria-checked="true"]{background:var(--taken)}
+.toggle[aria-checked="true"]::after{left:21px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.pcard h4{margin:0 0 6px;font-size:13px;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
+.meter{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:8px 0 4px;position:relative}
+.meter i{display:block;height:100%;border-radius:4px;transition:width .4s}
+.meter .mid{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:var(--surface)}
+.plist{list-style:none;margin:0;padding:0}
+.plist li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.plist li:last-child{border-bottom:0}
+.plist .o{font-weight:600}
+.o.t{color:var(--taken)} .o.m{color:var(--missed)} .o.d{color:var(--down)}
+.notice{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--missed);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:13px}
+.notice.info{border-left-color:var(--accent)}
+.notice b{display:block;font-size:12px;color:var(--ink2);margin-bottom:2px}
+.notice .x{float:right;border:0;background:none;color:var(--muted);font-size:16px;line-height:1;padding:0 0 0 8px}
+details.rules summary{cursor:pointer;font-size:13px;color:var(--accent)}
+details.rules ul{margin:6px 0 0;padding-left:18px;font-size:13px}
+
+/* Ping overlay */
+.ping{position:absolute;inset:0;background:#c62f25;color:#fff;display:flex;flex-direction:column;align-items:center;padding:38px 20px 26px;text-align:center}
+.ping.urgent{animation:urgent .7s infinite alternate}
+@keyframes urgent{from{background:#c62f25}to{background:#86140e}}
+.ping .kind{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.ping .badge{background:#fff;color:#c62f25;border-radius:999px;font-size:11px;font-weight:800;padding:2px 9px;margin-top:6px}
+.ping h3{font-size:22px;margin:12px 0 4px}
+.ping .det{opacity:.92;font-size:14px}
+.ring{width:170px;height:170px;margin:22px 0 10px;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .big{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .big b{font-size:52px;line-height:1;font-variant-numeric:tabular-nums}
+.ring .big span{font-size:12px;opacity:.85}
+.ping .nudged{background:rgba(255,255,255,.18);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;margin-bottom:6px}
+.ping .acts{margin-top:auto;width:100%;display:grid;gap:10px}
+.ping .take{background:#fff;color:#0b0b0b;border:0;border-radius:16px;padding:16px;font-size:18px;font-weight:800}
+.ping .decline{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.7);border-radius:16px;padding:12px;font-size:15px;font-weight:600}
+.ping .still{font-size:13px;margin-top:2px;min-height:18px}
+.availcell{display:flex;align-items:center;gap:8px}
+.toggle:disabled{opacity:.5;cursor:not-allowed}
+button.chip{cursor:pointer;font:inherit;font-size:11px}
+button.chip:hover{border-color:var(--ink2)}
+.plist li.tap,.rlist li.tap{cursor:pointer}
+.plist li.tap:hover,.rlist li.tap:hover{background:var(--surface2)}
+.tkb{display:inline-block;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:0 6px}
+.apphead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.helpbtn{flex:none;white-space:nowrap;border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:999px;font-size:12px;font-weight:600;padding:3px 10px}
+.helpfoot{display:block;width:100%;margin:4px 0 6px;padding:10px;border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:12px;font-weight:600}
+.back{border:0;background:none;color:var(--accent);padding:0;font-size:14px;margin:4px 0}
+.ping{z-index:10}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center;z-index:6}
+.console .sheet-bg{position:fixed;align-items:center;padding:16px;z-index:50}
+.sheet{background:var(--surface);width:100%;max-width:440px;border-radius:16px 16px 0 0;padding:16px;max-height:92%;overflow:auto;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
+.console .sheet{border-radius:12px}
+.sheet h3{margin:0 0 8px;font-size:16px}
+.sheet dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px;margin:0 0 8px}
+.sheet dt{color:var(--ink2)} .sheet dd{margin:0;font-weight:600}
+.sheet label{display:block;font-size:13px;font-weight:600;margin:8px 0 4px}
+.sheet select,.sheet textarea{width:100%;font:inherit;font-size:13px;padding:7px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.sheet .acts2{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+
+/* Annotations for presenting (toggle in Prototype controls) */
+body.no-anno .anno, body.no-anno .helen{display:none}
+.anno{background:#fff8db;border:1px solid #f0dc98;border-left:4px solid #d9a400;border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.45;color:#3d3a30;margin:0 0 8px}
+.anno .ah{display:block;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#8a6a00;margin-bottom:2px}
+.anno .m{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700}
+.anno .try{display:block;margin-top:4px;color:#6b5a1e}
+.phone-wrap .anno{width:300px}
+.anno.up{position:relative;margin-top:14px}
+.anno.up::before{content:"";position:absolute;top:-9px;left:24px;border:9px solid transparent;border-top:0;border-bottom-color:#d9a400}
+.anno .ptr{font-weight:700;text-transform:none;letter-spacing:0;color:#a07800;margin-left:4px}
+.drill .anno,.screen .anno,.sheet .anno{margin-top:8px}
+.helen{max-width:1600px;margin:12px auto 0;padding:0 16px}
+.helen .in{background:var(--surface);border:1px solid #f0dc98;border-top:4px solid #d9a400;border-radius:12px;padding:14px 16px}
+.helen h2{font-size:17px;margin:0 0 2px}
+.helen .sub{color:var(--ink2);font-size:13px;margin:0 0 12px}
+.asks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.ask{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px}
+.ask q{display:block;font-style:italic;color:var(--ink2);margin-bottom:4px}
+.ask b.ans{display:block;margin-bottom:2px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi .lab{font-size:12px;color:var(--ink2);margin-bottom:4px}
+.kpi .val{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .val small{font-size:12px;font-weight:600;color:var(--ink2)}
+.kpi .row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .now{color:var(--missed);font-weight:700}
+.walk{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
+.walk ol{margin:0;padding-left:20px;font-size:13px}
+.walk ol li{margin-bottom:3px}
+.keep{background:var(--taken-soft);border-radius:10px;padding:10px 12px;font-size:13px}
+@media (max-width:900px){.asks,.walk{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+/* Numbered pins + key (annotations) */
+body.no-anno .pin, body.no-anno .key{display:none}
+.console .chg,.screen .chg,.sheet .chg{display:none}
+.framewrap,.phone-wrap{position:relative}
+.pin{position:absolute;z-index:40;min-width:24px;height:24px;padding:0 6px;border-radius:12px;border:2px solid #fff;background:#d9a400;color:#fff;font-size:11px;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,.25);line-height:20px}
+.pin .pop{display:none;position:absolute;top:28px;left:0;width:230px;background:#fffdf4;border:1px solid #f0dc98;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.45;color:#3d3a30;text-align:left;font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.pin.r .pop{left:auto;right:0}
+.pin .pop b{display:block;color:#8a6a00;margin-bottom:2px}
+.pin .pop .pm{display:block;margin-top:4px}
+.pin{cursor:default;display:inline-flex;align-items:center;justify-content:center}
+.pin:hover{z-index:70}
+.pin:hover .pop{display:block}
+.hl{outline:3px solid #d9a400 !important;outline-offset:3px;transition:outline-color .3s}
+.key{max-width:1600px;margin:10px auto 0;padding:0 16px}
+.key-in{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.key-h{font-size:13px;font-weight:700;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.key-h .hint{font-weight:400}
+.krows{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 12px;align-items:start}
+.krow{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-content:start;align-items:center;gap:1px 8px;border:0;background:none;text-align:left;padding:5px 6px;border-radius:8px;font-size:13px;color:var(--ink)}
+.krow:hover{background:var(--surface2)}
+.krow .kn{grid-row:span 2;min-width:24px;height:22px;border-radius:11px;background:#d9a400;color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+.krow .kt{flex:1}
+.krow .km{grid-column:2;color:var(--ink2);font-size:12px}
+.walkd{margin-top:2px}
+.dlist .plist{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:0 10px;margin-top:6px;max-width:420px}
+.walkd summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px}
+.kpin{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;background:#d9a400;color:#fff;font-size:10px;font-weight:800;margin-left:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Prototype: bringing the quiet responders back</h1>
+  <p>Clickable mock-up of the one-pager in <a href="brief.md">brief.md</a>. Left: the handler's desktop console. Right: the handler's phone and the responder's phone, all kept in sync. Sample data, nothing is connected. Yellow numbered pins match the numbered changes in the brief.</p>
+</div>
+
+<div class="controls">
+  <div class="bar" role="group" aria-label="Prototype controls">
+    <span class="lbl">Prototype controls</span>
+    <span class="seg" id="pairSeg">
+      <button data-pair="kip" aria-pressed="true">Kip + Meteor Mite</button>
+      <button data-pair="linda" aria-pressed="false">Linda Pruitt + Farlight</button>
+    </span>
+    <button class="btn primary" id="sendLocal">Send a local ping</button>
+    <button class="btn" id="sendAway">Send an out-of-area ping</button>
+    <button class="btn" id="restore">Apply one-time restore <span class="kpin">4</span></button>
+    <span>Clock speed
+      <span class="seg" id="speedSeg">
+        <button data-speed="1" aria-pressed="false">1×</button>
+        <button data-speed="4" aria-pressed="true">4×</button>
+      </span>
+    </span>
+    <button class="btn" id="reset">Reset</button>
+    <span>Annotations
+      <span class="seg" id="annoSeg">
+        <button data-anno="on" aria-pressed="true">On</button>
+        <button data-anno="off" aria-pressed="false">Off</button>
+      </span>
+    </span>
+  </div>
+</div>
+
+<div class="helen">
+  <div class="in">
+    <h2>For Helen: what you asked for, and where to see it</h2>
+    <p class="sub">Every proposed change shows up as something a handler or responder sees and does. Projected figures are the brief's central case.</p>
+    <div class="asks">
+      <div class="ask"><q>Something a handler like Kip would notice</q><b class="ans">Kip's console and phone (change 1)</b>Live pings with Nudge, each responder's week against their usual, alerts, a ranking chart and an availability switch.</div>
+      <div class="ask"><q>A responder who's gone quiet would feel differently</q><b class="ans">Meteor Mite's phone (changes 2–6)</b>A ping that\'s hard to miss, a second chance, and their standing with a recovery estimate.</div>
+      <div class="ask"><q>I don't want to just quietly change a number</q><b class="ans">The number changes are visible (3–5)</b>The miss penalty, recovery and restore all show on the ranking. Any ping can be reported (7).</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="lab">Pings answered</div><div class="val">91.5% <small>projected</small></div><div class="row"><span>Before 4.2: 97.7%</span><span class="now">Now: 84.9%</span></div></div>
+      <div class="kpi"><div class="lab">Pings taken (acceptance)</div><div class="val">72% <small>projected</small></div><div class="row"><span>Before 4.2: ≈77%</span><span class="now">Now: 66–73%</span></div></div>
+      <div class="kpi"><div class="lab">Callouts filled</div><div class="val">94.0% <small>projected</small></div><div class="row"><span>Before 4.2: 94.9%</span><span class="now">Now: 89.2%</span></div></div>
+      <div class="kpi"><div class="lab">Quiet four's share of pings</div><div class="val">27% <small>projected</small></div><div class="row"><span>Before 4.2: 28%</span><span class="now">Now: 5%</span></div></div>
+    </div>
+    <details class="walkd"><summary>Two-minute walkthrough</summary>
+    <div class="walk">
+      <div>
+        <ol>
+          <li><b>Send a local ping.</b> It shows on all three screens with a 60s countdown.</li>
+          <li><b>Nudge</b> from Kip's console or phone. Meteor Mite's phone shakes.</li>
+          <li><b>Let it run out.</b> See the missed-ping notice, then the second chance.</li>
+          <li><b>Click Meteor Mite</b> on the console to see their pings and ranking over time.</li>
+          <li><b>Apply one-time restore.</b> Their ranking goes back to normal on every screen.</li>
+          <li><b>Tap any ping</b> to raise a support ticket about it.</li>
+        </ol></div>
+      <div class="keep"><b>What stays the same:</b> the 60-second ping wait. Callouts filled and the quiet four's share come back in every scenario. Pings answered and taken depend on the new alerts working, which is why they ship first and get measured.</div>
+    </div>
+    </details>
+  </div>
+</div>
+<div class="key">
+  <div class="key-in">
+    <div class="key-h">Changes in this prototype <span class="hint">Hover a numbered pin for details. Click a row to find it on screen.</span></div>
+    <div class="krows">
+      <button class="krow" data-pin="1"><span class="kn">1</span><span class="kt"><b>Kip can see it</b></span><span class="km">Meteor Mite fell <b>11 → 1</b> pings a week, unseen</span></button>
+      <button class="krow" data-pin="2"><span class="kn">2</span><span class="kt"><b>Easier to catch in 60s</b></span><span class="km">Pings answered <b>84.9% → 91.5%</b></span></button>
+      <button class="krow" data-pin="345"><span class="kn">3–5</span><span class="kt"><b>A ranking that recovers</b></span><span class="km">Quiet four's share <b>5% → 27%</b></span></button>
+      <button class="krow" data-pin="6"><span class="kn">6</span><span class="kt"><b>Second chance</b></span><span class="km">Callouts filled <b>89.2% → 94.0%</b></span></button>
+      <button class="krow" data-pin="7"><span class="kn">7</span><span class="kt"><b>Report a problem where it happened</b></span><span class="km">Tickets ran <b>~3×</b> normal after 4.2</span></button>
+    </div>
+  </div>
+</div>
+
+
+<div class="stage">
+  <section>
+    <p class="where" id="cWhere">Handler console · desktop</p>
+    <div class="framewrap">
+    <span class="pin" data-target="#strip" data-align="center" style="left:-12px" aria-hidden="true">1<span class="pop"><b>1 · Kip can see it</b>Live pings with Nudge, each responder's week against their usual, alerts and availability.<span class="pm">Meteor Mite fell <b>11 → 1</b> pings a week, unseen</span></span></span><span class="pin" data-target="#balanceCard" data-align="top" style="left:-12px" aria-hidden="true">3–5<span class="pop"><b>3–5 · A ranking that recovers</b>A miss costs −0.04 instead of −0.12, a low ranking drifts back to the middle over about 4 weeks, and a one-time restore to 11 Aug.<span class="pm">Quiet four's share <b>5% → 27%</b></span></span></span><span class="pin" data-target=".drill .plist li" data-align="center" style="left:-12px" aria-hidden="true">7<span class="pop"><b>7 · Report a problem where it happened</b>Tap any ping to raise a ticket about it, with its record attached and one ticket per ping. A general form also sits at the bottom of each app.<span class="pm">Tickets ran <b>~3×</b> normal after 4.2</span></span></span>
+    
+    <div class="browser">
+    <div class="b-bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="b-url">dispatch.rook/handler/responders</span></div>
+    <div class="console" style="position:relative">
+      <div id="cSheet"></div>
+      <div class="c-head">
+        <span class="brand">Rook Dispatch <span style="font-weight:400;color:var(--ink2)">· Handler</span></span>
+        <nav><span>Callouts</span><span class="on">Responders</span><span>Map</span><span>Reports</span></nav>
+        <span class="who" id="cWho"></span>
+        <button class="btn" data-help="console">Report a problem</button>
+      </div>
+      <div class="c-body">
+        <div id="strip"></div>
+        <div class="alerts" id="alerts"></div>
+        <div class="card" id="balanceCard">
+          <h3>This week's pings <span class="chg">1</span></h3>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>Responder</th><th>This week vs usual</th><th class="num">Pings</th><th>Taken · Turned down · Missed</th><th>Ranking</th><th>Available</th></tr></thead>
+            <tbody id="balance"></tbody>
+          </table></div>
+          <p class="hint" style="margin:8px 0 0">Click a responder to see their last 10 pings. They see the same list on their phone.</p>
+        </div>
+        <div class="card digest" id="digest"></div>
+      </div>
+    </div>
+    </div>
+    </div>
+  </section>
+
+  <aside class="phones">
+  <div class="phone-wrap">
+    <span class="pin r" data-target="#happ .plist li" data-clamp="#hphone .screen" data-align="center" style="right:-12px" aria-hidden="true">7<span class="pop"><b>7 · Report a problem where it happened</b>Tap any ping to raise a ticket about it, with its record attached and one ticket per ping. A general form also sits at the bottom of each app.<span class="pm">Tickets ran <b>~3×</b> normal after 4.2</span></span></span><span class="pin r" data-target="#happ" data-align="top" style="right:-12px" aria-hidden="true">1<span class="pop"><b>1 · Kip can see it</b>Live pings with Nudge, each responder's week against their usual, alerts and availability.<span class="pm">Meteor Mite fell <b>11 → 1</b> pings a week, unseen</span></span></span>
+    <p class="where" id="hWhere">Handler phone app</p>
+    <div class="phone" id="hphone">
+      <div class="screen">
+        <div class="status"><span>14:02</span><span>●●● 5G ▮</span></div>
+        <div class="app" id="happ"></div>
+        <div id="hSheet"></div>
+      </div>
+    </div>
+  </div>
+  <div class="phone-wrap">
+    <span class="pin r" data-target="#app" data-align="top" style="right:-12px" aria-hidden="true">2 · 6<span class="pop"><b>2 · 6 · Easier to catch, with a second chance</b>Full-screen countdown that gets urgent in the last 20s, plus a handler nudge. A missed local ping comes back once. The wait stays 60s.<span class="pm">Answered <b>84.9% → 91.5%</b> · Filled <b>89.2% → 94.0%</b></span></span></span><span class="pin r" data-target="#app .pcard" data-align="top" data-clamp="#phone .screen" style="right:-12px" aria-hidden="true">3–5<span class="pop"><b>3–5 · A ranking that recovers</b>A miss costs −0.04 instead of −0.12, a low ranking drifts back to the middle over about 4 weeks, and a one-time restore to 11 Aug.<span class="pm">Quiet four's share <b>5% → 27%</b></span></span></span><span class="pin r" data-target="#app .plist li" data-align="center" data-clamp="#phone .screen" style="right:-12px" aria-hidden="true">7<span class="pop"><b>7 · Report a problem where it happened</b>Tap any ping to raise a ticket about it, with its record attached and one ticket per ping. A general form also sits at the bottom of each app.<span class="pm">Tickets ran <b>~3×</b> normal after 4.2</span></span></span>
+    <p class="where" id="pWhere">Responder phone app</p>
+    <div class="phone" id="phone">
+      <div class="screen">
+        <div class="status"><span id="clock">14:02</span><span>●●● 5G ▮</span></div>
+        <div class="app" id="app"></div>
+        <div id="rSheet"></div>
+        <div id="pingLayer"></div>
+      </div>
+    </div>
+  </div>
+  </aside>
+</div>
+<div class="sr" aria-live="polite" id="live"></div>
+
+<script>
+const AREAS={kip:["Riverside","Old Town","Harborside"],linda:["Midtown","Hillcrest","Riverside"]};
+const TAGS=["structural-entry","flight","hazmat-tolerant","crowd-management","de-escalation","cold-weather"];
+const SEED={
+  kip:{handler:"Kip",area:"Eastgate",focus:"Meteor Mite",next:"The Gale",
+    responders:[
+      {name:"Meteor Mite",usual:11,pre:{t:46/67,d:19/67,m:2/67},hist:[.93,1,1,1,1,1,.6,.32,.08,0],week:{t:0,d:0,m:1},score:0,available:true,
+       history:[["31 Aug","m","Eastgate"],["24 Aug","m","Eastgate"],["24 Aug","d","Riverside"],["17 Aug","t","Eastgate"],["17 Aug","m","Eastgate"],["17 Aug","m","Old Town"],["17 Aug","d","Eastgate"],["10 Aug","t","Eastgate"],["10 Aug","m","Eastgate"],["10 Aug","m","Eastgate"]]},
+      {name:"The Gale",usual:13,pre:{t:61/78,d:14/78,m:3/78},hist:[.95,.98,1,1,1,1,.9,.95,1,1],week:{t:16,d:3,m:2},score:0.95,available:true,
+       history:[["31 Aug","t","Eastgate"],["31 Aug","t","Old Town"],["31 Aug","t","Eastgate"],["31 Aug","d","Riverside"],["31 Aug","t","Eastgate"],["31 Aug","m","Eastgate"],["31 Aug","t","Eastgate"],["31 Aug","t","Harborside"],["31 Aug","t","Eastgate"],["31 Aug","t","Eastgate"]]}
+    ],
+    digest:[["Meteor Mite","1 ping last week (usual 11). Ranking: lower than usual, recovering."],["The Gale","21 pings (usual 13), covering Meteor Mite's callouts."]],
+    alerts:[{k:"warn",i:"!",t:"Meteor Mite got less than half their usual pings for 2 weeks",s:"2 pings, then 1. Usual week: 11. Their callouts have been going to The Gale."}]},
+  linda:{handler:"Linda Pruitt",area:"Uptown",focus:"Farlight",next:"the next responder on the list",
+    responders:[
+      {name:"Farlight",usual:12,pre:{t:53/72,d:16/72,m:3/72},hist:[1,1,1,1,1,1,.55,.1,0,0],week:{t:0,d:0,m:0},score:0.0,available:true,
+       history:[["24 Aug","m","Uptown"],["17 Aug","m","Uptown"],["17 Aug","m","Midtown"],["17 Aug","d","Uptown"],["10 Aug","t","Uptown"],["10 Aug","m","Uptown"],["10 Aug","t","Uptown"],["10 Aug","m","Uptown"],["10 Aug","d","Hillcrest"],["10 Aug","m","Uptown"]]}
+    ],
+    digest:[["Farlight","0 pings last week (usual 12). Ranking: lower than usual, recovering."]],
+    alerts:[{k:"warn",i:"!",t:"Farlight got less than half their usual pings for 2 weeks",s:"1 ping, then 0. Usual week: 12."}]}
+};
+const LABEL={t:"Taken",d:"Turned down",m:"Missed"};
+let S, pairKey="kip", speed=4, live=null, liveResult=null, ticker=null, phoneNotices=[], nudgeFlag=false, openRow=null, missStreak=0;
+
+const clone=o=>JSON.parse(JSON.stringify(o));
+function reset(){
+  clearInterval(ticker); live=null; liveResult=null; phoneNotices=[]; openRow=null; missStreak=0;
+  S={kip:clone(SEED.kip),linda:clone(SEED.linda)};
+  ticket=null; hOpen=null; let c=5104;
+  Object.values(S).forEach(pr=>pr.responders.forEach(r=>r.history.forEach(h=>{h[3]=c; c+=7;})));
+  renderAll();
+}
+const P=()=>S[pairKey];
+const focusR=()=>P().responders.find(r=>r.name===P().focus);
+const now=()=>{const d=new Date();return d.getHours().toString().padStart(2,"0")+":"+d.getMinutes().toString().padStart(2,"0")};
+const say=t=>{document.getElementById("live").textContent=t};
+
+function standing(r){
+  const s=r.score;
+  if(s>=0.7) return {cls:"ok",label:"Normal",detail:"You're ranked normally."};
+  if(s>=0.5) return {cls:"mid",label:"Slightly lower",detail:"Taking your next ping or two brings you back to normal."};
+  if(!r.available) return {cls:"low",label:"Lower, recovery paused",detail:"Recovery is paused while you're marked unavailable."};
+  const w=projectScore(r,true).findIndex(v=>v>=.7);
+  return {cls:"low",label:"Lower, recovering",detail:w>0?`Back to normal in about ${w} week${w>1?"s":""} if you stay available and answer pings as usual. Each ping you take speeds it up.`:"Stay available and take pings to move back up. Each ping you take speeds it up."};
+}
+
+/* ---------- Recovery projection (console drill-down) ----------
+   Rules from the brief: taken +0.08, local turn-down -0.12, miss -0.04,
+   drift up to the middle (0.5) over about 4 weeks while available.
+   Weekly pings follow ranking, using the calibration from the parameter model. */
+function volFrac(s){const m=Math.max(0,.9-s)*.25/(.6/45);return Math.min(1,Math.max(.02,.284-(.232/16.875)*m)/.284);}
+function projectScore(r,answers){
+  const out=[r.score]; let s=r.score;
+  for(let w=1;w<=8;w++){
+    if(r.available){
+      if(answers){const n=r.usual*volFrac(s);s+=n*(r.pre.t*.08-r.pre.d*.12-r.pre.m*.04);}
+      s=Math.max(0,Math.min(1,s));
+      if(s<.5) s=Math.min(.5,s+.125);
+    }
+    out.push(s);
+  }
+  return out;
+}
+function recoveryChart(r){
+  // One timeline: last 10 weeks (sample history), now, next 8 weeks (projected).
+  const past=[...r.hist], usual=projectScore(r,true), none=projectScore(r,false);
+  const NPAST=past.length, N=NPAST+1+8; // past weeks, now, 8 ahead
+  const W=560,H=190,L=30,R=12,T=12,Bm=26;
+  const x=i=>L+i*(W-L-R)/(N-1), y=v=>T+(H-T-Bm)*(1-v);
+  const nowI=NPAST;
+  const lvl=v=>v>=.7?"Ranked normally":v>=.5?"Slightly lower":"Lower";
+  const wkLabel=i=>i<nowI?`${nowI-i} week${nowI-i>1?"s":""} ago`:i===nowI?"Now":`In ${i-nowI} week${i-nowI>1?"s":""}`;
+  const pts=arr=>arr.map(([i,v],k)=>(k?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" ");
+  const hist=[...past.map((v,i)=>[i,v]),[nowI,r.score]];
+  const proj=usual.map((v,k)=>[nowI+k,v]);
+  const low=none.map((v,k)=>[nowI+k,v]);
+  let g="";
+  g+=`<rect x="${L}" y="${y(1)}" width="${W-L-R}" height="${y(.7)-y(1)}" fill="var(--taken-soft)" opacity=".6"/>`;
+  g+=`<text x="${L+4}" y="${y(.7)-4}" font-size="10" fill="var(--taken)">Ranked normally</text>`;
+  g+=`<line x1="${L}" x2="${W-R}" y1="${y(.5)}" y2="${y(.5)}" stroke="var(--muted)" stroke-dasharray="2 3"/><text x="${L+4}" y="${y(.5)-4}" font-size="10" fill="var(--muted)">Middle</text>`;
+  g+=`<line x1="${L}" x2="${W-R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>`;
+  [[0,"Low"],[.5,"Mid"],[1,"High"]].forEach(([v,t])=>{g+=`<text x="${L-5}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${t}</text>`;});
+  // future shading + now marker
+  g+=`<rect x="${x(nowI)}" y="${T}" width="${W-R-x(nowI)}" height="${H-T-Bm}" fill="var(--surface2)" opacity=".7"/>`;
+  g+=`<line x1="${x(nowI)}" x2="${x(nowI)}" y1="${T}" y2="${H-Bm}" stroke="var(--ink2)" stroke-width="1"/>`;
+  // range band: from "takes no pings" up to "answers as usual"
+  g+=`<path d="${pts(proj)} L${[...low].reverse().map(([i,v])=>x(i).toFixed(1)+" "+y(v).toFixed(1)).join(" L")} Z" fill="var(--accent)" opacity=".14"/>`;
+  g+=`<path d="${pts(hist)}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`;
+  g+=`<path d="${pts(proj)}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  g+=`<circle cx="${x(nowI)}" cy="${y(r.score)}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+  // x labels
+  [[0,"10 wks ago"],[5,"5 wks ago"],[nowI,"Now"],[nowI+4,"+4 wks"],[nowI+8,"+8 wks"]].forEach(([i,t])=>{g+=`<text x="${x(i)}" y="${H-8}" text-anchor="${i===0?"start":i===N-1?"end":"middle"}" font-size="10" fill="${i===nowI?"var(--ink)":"var(--muted)"}" ${i===nowI?'font-weight="700"':""}>${t}</text>`;});
+  g+=`<text x="${x(nowI)-6}" y="${T+10}" text-anchor="end" font-size="10" fill="var(--muted)">Past</text><text x="${x(nowI)+6}" y="${T+10}" font-size="10" fill="var(--muted)">Projected</text>`;
+  // hover targets
+  const all=[...hist,...proj.slice(1)];
+  g+=all.map(([i,v])=>{const lo=i>nowI?none[i-nowI]:null;return `<circle cx="${x(i)}" cy="${y(v)}" r="8" fill="transparent"><title>${wkLabel(i)}: ${lvl(v)}${lo!==null&&Math.abs(lo-v)>.01?` (if no pings taken: ${lvl(lo).toLowerCase()})`:""}</title></circle>`;}).join("");
+  const wk=usual.findIndex(v=>v>=.7);
+  const summary=!r.available?"Recovery is paused while they're marked unavailable."
+    :wk===0?"Ranked normally now."
+    :wk>0?`Expected back to normal in about ${wk} week${wk>1?"s":""} if they answer pings the way they usually do. If they take none, they drift up to the middle and stop there.`
+    :"Not expected back to normal within 8 weeks.";
+  return `<h5>Ranking over time</h5>
+    <div class="rlegend"><span><i style="border-color:var(--accent)"></i>Ranking so far</span><span><i style="border-color:var(--accent);border-top-style:dashed"></i>Expected, if they answer as usual</span><span><i style="border:0;height:10px;background:var(--accent);opacity:.18;border-radius:2px"></i>Range, down to taking no pings</span></div>
+    <div class="rchart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${r.name}: ranking over the last 10 weeks, now, and projected for the next 8 weeks">${g}</svg></div>
+    <div class="hint">${summary} The projection is an estimate, not a promise.</div>`;
+}
+
+/* ---------- Console ---------- */
+function renderConsole(){
+  const p=P();
+  document.getElementById("cWho").textContent=`${p.handler} · ${p.area}`;
+  document.getElementById("cWhere").textContent=`Handler console · desktop · ${p.handler}`;
+  // live strip
+  const st=document.getElementById("strip");
+  if(live){
+    st.innerHTML=`<div class="strip live"><div class="row"><span class="dot"></span>
+      <span class="txt"><b>${p.focus}</b> has a live ping${live.retry?" (second chance)":""} · ${live.area} · ${live.tag} · <span class="secs" id="cSecs">${Math.ceil(live.t)}s</span> left <span class="chg">1</span></span>
+      <button class="btn" id="nudge" ${live.nudged?"disabled":""}>${live.nudged?"Nudged ✓":"Nudge "+p.focus}</button></div>
+      <div class="prog"><i id="cProg" style="width:${live.t/60*100}%"></i></div></div>`;
+    document.getElementById("nudge").onclick=nudge;
+  } else if(liveResult){
+    st.innerHTML=`<div class="strip"><div class="row"><span class="dot" style="background:${liveResult.c}"></span><span class="txt">${liveResult.text}</span></div></div>`;
+  } else {
+    st.innerHTML=`<div class="strip"><div class="row"><span class="dot"></span><span class="txt hint" style="font-size:13px">No live pings for your responders right now. Live pings show here with a countdown. <span class="chg">1</span></span></div></div>`;
+  }
+  // alerts
+  document.getElementById("alerts").innerHTML=p.alerts.map((a,i)=>`<div class="alert ${a.k}"><span class="ic">${a.i}</span><div class="msg"><b>${a.t}</b><small>${a.s}</small></div><button class="btn" data-dismiss="${i}">Got it</button></div>`).join("");
+  document.querySelectorAll("[data-dismiss]").forEach(b=>b.onclick=()=>{p.alerts.splice(+b.dataset.dismiss,1);renderAll();});
+  // balance
+  const max=24;
+  document.getElementById("balance").innerHTML=p.responders.map(r=>{
+    const n=r.week.t+r.week.d+r.week.m, sd=standing(r);
+    const row=`<tr class="resp" data-r="${r.name}"><td><b>${r.name}</b>${r.available?"":' <span class="hint">· unavailable</span>'}</td>
+      <td><div class="bal" title="Dashed box: usual week (${r.usual}). Bar: this week (${n})."><span class="usual" style="width:${r.usual/max*100}%"></span><span class="now" style="width:${Math.min(n,max)/max*100}%"></span></div></td>
+      <td class="num">${n} <span class="hint">/ ${r.usual}</span></td>
+      <td class="num">${r.week.t} · ${r.week.d} · ${r.week.m}</td>
+      <td><span class="pill ${sd.cls}">${sd.label}</span></td>
+      <td><div class="availcell"><button class="toggle" role="switch" aria-checked="${r.available}" aria-label="${r.name} available" data-avail="${r.name}" ${live&&r.name===p.focus?'disabled title="Wait until the live ping ends"':""}></button><span class="hint">${r.available?"Available":"Unavailable"}</span></div></td></tr>`;
+    const det=openRow===r.name?`<tr><td colspan="6" style="background:var(--surface2)"><div class="drill">
+      <div><h5>Last 10 pings, newest first</h5><div class="hint">Click a ping to raise a support ticket about it.</div><div class="dlist">${pingList(r,"console",p.area)}</div>
+        <h5 style="margin-top:12px">Ranking now</h5><span class="pill ${sd.cls}">${sd.label}</span>
+        <div class="meter"><i style="width:${Math.max(3,Math.round(r.score*100))}%;background:${sd.cls==="ok"?"var(--taken)":sd.cls==="mid"?"#d99a2b":"var(--missed)"}"></i><span class="mid"></span></div>
+        <div class="hint">${theyify(sd.detail)}</div></div>
+      <div>${recoveryChart(r)}</div></div></td></tr>`:"";
+    return row+det;
+  }).join("");
+  document.querySelectorAll("tr.resp").forEach(tr=>tr.onclick=()=>{openRow=openRow===tr.dataset.r?null:tr.dataset.r;renderAll();});
+  document.querySelectorAll("[data-avail]").forEach(b=>b.onclick=e=>{e.stopPropagation();setAvail(b.dataset.avail);});
+  // digest
+  document.getElementById("digest").innerHTML=`<h3>Monday digest <span class="chg">1</span></h3>${p.digest.map(d=>`<div style="margin-bottom:4px"><b>${d[0]}:</b> ${d[1]}</div>`).join("")}`;
+}
+
+/* ---------- Phone ---------- */
+function renderPhone(){
+  const p=P(), r=focusR(), sd=standing(r);
+  document.getElementById("pWhere").textContent=`Responder phone app · ${r.name}`;
+  const pct=Math.round(r.score*100);
+  const col=sd.cls==="ok"?"var(--taken)":sd.cls==="mid"?"#d99a2b":"var(--missed)";
+  document.getElementById("app").innerHTML=`
+    <div class="hint">Rook Dispatch · Responder</div>
+    <h2>${r.name}</h2>
+    <div class="hint">${p.area} · handler ${p.handler}</div>
+    ${phoneNotices.map((n,i)=>`<div class="notice ${n.k||""}"><button class="x" data-x="${i}" aria-label="Dismiss">×</button><b>${n.h}</b>${n.t}</div>`).join("")}
+    <div class="avail"><div><b>Available for callouts</b><div class="hint">${r.available?"You can be pinged":"You won't be pinged"}</div></div>
+      <button class="toggle" role="switch" aria-checked="${r.available}" id="avail" aria-label="Available for callouts"></button></div>
+    <div class="pcard">
+      <h4>Your pings <span class="chg">1</span></h4>
+      <div><span class="pill ${sd.cls}">${sd.label}</span></div>
+      <div class="meter"><i style="width:${Math.max(3,pct)}%;background:${col}"></i><span class="mid"></span></div>
+      <div class="hint" style="margin-bottom:8px">${sd.detail}</div>
+      <div class="hint" style="margin-bottom:2px">Tap a ping to report a problem with it.</div>
+      ${pingList(r,"rphone",p.area)}
+    </div>
+    <div class="pcard">
+      <details class="rules"><summary>How your ranking works <span class="chg">3</span><span class="chg">5</span></summary>
+        <ul>
+          <li>Taking a ping moves you up.</li>
+          <li>Turning down a ping in your area moves you down.</li>
+          <li>A missed ping counts for a third of a turn-down.</li>
+          <li>Turning down a callout outside your area costs nothing.</li>
+          <li>If you're ranked lower, you drift back toward the middle over about 4 weeks while you're available.</li>
+        </ul></details>
+    </div>
+    <button class="helpfoot" data-help="rphone">Report a problem</button>`;
+  document.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{phoneNotices.splice(+b.dataset.x,1);renderAll();});
+  document.getElementById("avail").onclick=responderToggle;
+  renderPing();
+  updateButtons();
+}
+function renderPing(){
+  const layer=document.getElementById("pingLayer");
+  if(!live){layer.innerHTML="";return;}
+  const C=2*Math.PI*74;
+  layer.innerHTML=`<div class="ping" id="pingEl">
+    <div class="kind">New callout · ping <span class="chg" style="background:#fff;color:#c62f25">2</span></div>
+    ${live.retry?'<div class="badge">Second chance · nobody has taken it yet</div>':""}
+    <h3>${live.area}</h3>
+    <div class="det">${live.tag} · about ${live.travel} min away${live.local?"":" · outside your area"}</div>
+    <div class="ring"><svg viewBox="0 0 170 170"><circle cx="85" cy="85" r="74" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="10"/>
+      <circle id="ringArc" cx="85" cy="85" r="74" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-live.t/60)}"/></svg>
+      <div class="big"><b id="pSecs">${Math.ceil(live.t)}</b><span>seconds to answer</span></div></div>
+    ${live.nudged?`<div class="nudged">${P().handler} nudged you</div>`:""}
+    <div class="still" id="still"></div>
+    <div class="acts"><button class="take" id="take">Take it</button><button class="decline" id="decline">Turn down</button></div>
+  </div>`;
+  document.getElementById("take").onclick=()=>resolve("t");
+  document.getElementById("decline").onclick=()=>resolve("d");
+  updateTick();
+}
+function updateTick(){
+  if(!live) return;
+  const s=Math.max(0,Math.ceil(live.t)), C=2*Math.PI*74;
+  const ps=document.getElementById("pSecs"); if(ps) ps.textContent=s;
+  const arc=document.getElementById("ringArc"); if(arc) arc.setAttribute("stroke-dashoffset",C*(1-live.t/60));
+  const el=document.getElementById("pingEl"); if(el) el.classList.toggle("urgent",live.t<=20);
+  const still=document.getElementById("still"); if(still) still.textContent=live.t<=20?`Still yours for ${s} more seconds`:"";
+  const cs=document.getElementById("cSecs"); if(cs) cs.textContent=s+"s";
+  const cp=document.getElementById("cProg"); if(cp) cp.style.width=(live.t/60*100)+"%";
+  const hs=document.getElementById("hSecs"); if(hs) hs.textContent=s;
+  const hp=document.getElementById("hProg"); if(hp) hp.style.width=(live.t/60*100)+"%";
+}
+
+/* ---------- Handler phone ---------- */
+let hLiveAlerts=true, hOpen=null;
+const theyify=s=>s.replace(/^You're/,"They're").replace(/\byou\b/g,"they").replace(/\bYou\b/g,"They");
+const meterCol=sd=>sd.cls==="ok"?"var(--taken)":sd.cls==="mid"?"#d99a2b":"var(--missed)";
+function pingList(r,src,area){
+  return `<ul class="plist">${r.history.slice(0,10).map((h,i)=>`<li class="tap" data-tk="${r.name}|${i}" data-src="${src}" role="button" tabindex="0">
+    <span>${h[0]}${h[2]!==area?` · <span class="hint">${h[2]}</span>`:""}${h[4]?`<br><span class="tkb">Ticket ${h[4]}</span>`:""}</span>
+    <span><span class="o ${h[1]}">${LABEL[h[1]]}</span> <span class="hint">›</span></span></li>`).join("")}</ul>`;
+}
+function renderHandlerPhone(){
+  const p=P();
+  document.getElementById("hWhere").textContent=`Handler phone app · ${p.handler}`;
+  const liveCard=live&&hLiveAlerts?`<div class="hlive">
+      <div class="row"><span class="dot"></span><span><b>${p.focus}</b> has a live ping</span></div>
+      <div class="hint">${live.area} · ${live.tag}${live.retry?" · second chance":""}</div>
+      <div class="hsecs"><span id="hSecs">${Math.ceil(live.t)}</span>s left</div>
+      <div class="prog"><i id="hProg" style="width:${live.t/60*100}%"></i></div>
+      <button class="btn primary" id="hNudge" ${live.nudged?"disabled":""}>${live.nudged?"Nudged ✓":"Nudge "+p.focus}</button></div>`:"";
+  const r=hOpen&&p.responders.find(x=>x.name===hOpen);
+  let html;
+  if(r){
+    const sd=standing(r), n=r.week.t+r.week.d+r.week.m;
+    html=`<button class="back" id="hBack">‹ Your responders</button>
+      <h2>${r.name}</h2>
+      <div class="hint">${p.area} · ${n} ping${n===1?"":"s"} this week · usual ${r.usual}</div>
+      ${liveCard}
+      <div class="pcard"><h4>Ranking <span class="chg">1</span></h4>
+        <span class="pill ${sd.cls}">${sd.label}</span>
+        <div class="meter"><i style="width:${Math.max(3,Math.round(r.score*100))}%;background:${meterCol(sd)}"></i><span class="mid"></span></div>
+        <div class="hint">${theyify(sd.detail)}</div></div>
+      <div class="pcard"><div class="avail" style="margin:0;border:0;padding:0"><div><b>Available for callouts</b><div class="hint">${r.available?"They can be pinged":"They won't be pinged"}</div></div>
+        <button class="toggle" role="switch" aria-checked="${r.available}" data-havail="${r.name}" aria-label="${r.name} available" ${live&&r.name===p.focus?"disabled":""}></button></div></div>
+      <div class="pcard"><h4>Last 10 pings <span class="chg">7</span></h4>
+        <div class="hint" style="margin-bottom:2px">Tap a ping to report a problem with it.</div>
+        ${pingList(r,"hphone",p.area)}</div>
+      <button class="helpfoot" data-help="hphone">Report a problem</button>`;
+  } else {
+    const latest=!live&&liveResult?`<div class="notice info"><b>Latest · ${now()}</b>${liveResult.text}</div>`:"";
+    const head={bad:"Needs attention",warn:"Heads up",info:"Update"};
+    html=`<div class="hint">Rook Dispatch · Handler</div>
+      <h2>${p.handler}</h2>
+      <div class="hint">${p.area} · ${p.responders.length} responder${p.responders.length>1?"s":""} <span class="chg">1</span></div>
+      ${liveCard}${latest}
+      ${p.alerts.map((a,i)=>`<div class="notice ${a.k==="info"?"info":""}"><button class="x" data-hx="${i}" aria-label="Dismiss">×</button><b>${head[a.k]}</b>${a.t}</div>`).join("")}
+      <div class="pcard"><h4>Your responders this week</h4>
+        <ul class="rlist">${p.responders.map(x=>{const n=x.week.t+x.week.d+x.week.m,sd=standing(x);return `<li class="tap" data-hopen="${x.name}" role="button" tabindex="0">
+          <span><b>${x.name}</b><br><span class="hint">${n} ping${n===1?"":"s"} · usual ${x.usual}${x.available?"":" · unavailable"}</span><br><span class="pill ${sd.cls}" style="margin-top:3px">${sd.label}</span></span>
+          <span style="display:flex;align-items:center;gap:8px"><button class="toggle" role="switch" aria-checked="${x.available}" data-havail="${x.name}" aria-label="${x.name} available" ${live&&x.name===p.focus?"disabled":""}></button><span class="hint" style="font-size:18px">›</span></span></li>`;}).join("")}</ul>
+        <div class="hint" style="margin-top:4px">Tap a responder for their ranking and last 10 pings.</div></div>
+      <div class="pcard"><div class="avail" style="margin:0;border:0;padding:0"><div><b>Live ping alerts</b><div class="hint">${hLiveAlerts?"Buzz me when one of mine is pinged":"Off: you'll only get missed and unfilled alerts"}</div></div>
+        <button class="toggle" role="switch" aria-checked="${hLiveAlerts}" id="hLiveToggle" aria-label="Live ping alerts"></button></div></div>
+      <button class="helpfoot" data-help="hphone">Report a problem</button>`;
+  }
+  document.getElementById("happ").innerHTML=html;
+  const hn=document.getElementById("hNudge"); if(hn) hn.onclick=nudge;
+  const hb=document.getElementById("hBack"); if(hb) hb.onclick=()=>{hOpen=null;renderAll();};
+  document.querySelectorAll("[data-hx]").forEach(b=>b.onclick=()=>{p.alerts.splice(+b.dataset.hx,1);renderAll();});
+  document.querySelectorAll("[data-havail]").forEach(b=>b.onclick=e=>{e.stopPropagation();setAvail(b.dataset.havail);});
+  document.querySelectorAll("[data-hopen]").forEach(li=>li.onclick=()=>{hOpen=li.dataset.hopen;document.getElementById("happ").scrollTop=0;renderAll();});
+  const lt=document.getElementById("hLiveToggle"); if(lt) lt.onclick=()=>{hLiveAlerts=!hLiveAlerts;renderAll();};
+}
+
+/* ---------- Support tickets (change 7): about one ping, or a general problem ----------
+   Available on the console, the handler phone and the responder phone. */
+let ticket=null, ticketSeq=4820;
+const TK_REASONS={
+  m:["The phone didn't alert","It was gone before it could be answered","It was answered but didn't register","Something else"],
+  d:["It wasn't turned down","Wrong area or capability tags","Something else"],
+  t:["Problem after the callout was taken","Something else"]
+};
+const TK_GENERAL={
+  handler:["Pings or alerts","A responder's ranking","Availability","The console or app isn't working","Something else"],
+  responder:["Pings or alerts","My ranking","My availability","The app isn't working","Something else"]
+};
+const reporterOf=src=>src==="rphone"?focusR().name:P().handler;
+function openTicket(src,name,idx){
+  const r=P().responders.find(x=>x.name===name), h=r.history[idx];
+  ticket={src,r,h,step:h[4]?"exists":"form",reason:TK_REASONS[h[1]][0],note:""};
+  renderSheets();
+}
+function openHelp(src){
+  ticket={src,general:true,step:"form",reason:TK_GENERAL[src==="rphone"?"responder":"handler"][0],note:"",err:false};
+  renderSheets();
+}
+function bindTickets(){
+  document.querySelectorAll("[data-tk]").forEach(el=>{
+    const go=e=>{e.stopPropagation();const [n,i]=el.dataset.tk.split("|");openTicket(el.dataset.src,n,+i);};
+    el.onclick=go; el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go(e);}};
+  });
+  document.querySelectorAll("[data-help]").forEach(b=>b.onclick=e=>{e.stopPropagation();openHelp(b.dataset.help);});
+}
+function renderSheets(){
+  ["cSheet","hSheet","rSheet"].forEach(id=>document.getElementById(id).innerHTML="");
+  if(!ticket) return;
+  const box=document.getElementById({console:"cSheet",hphone:"hSheet",rphone:"rSheet"}[ticket.src]);
+  const by=reporterOf(ticket.src);
+  let inner;
+  if(ticket.general){
+    const opts=TK_GENERAL[ticket.src==="rphone"?"responder":"handler"];
+    if(ticket.step==="form"){
+      inner=`<h3>Report a problem <span class="chg">7</span></h3>
+        <div class="hint" style="margin-bottom:6px">For anything that isn't about one ping. To report a ping, tap it in a ping list instead.</div>
+        <label for="tkReason">What's it about?</label>
+        <select id="tkReason">${opts.map(o=>`<option ${o===ticket.reason?"selected":""}>${o}</option>`).join("")}</select>
+        <label for="tkNote">What happened?</label>
+        <textarea id="tkNote" rows="4" placeholder="Describe the problem in your own words">${ticket.note}</textarea>
+        ${ticket.err?'<div class="hint" style="color:var(--missed)">Add a short description so support can help.</div>':""}
+        <div class="hint" style="margin-top:6px">Support also gets ${ticket.src==="rphone"?"your":"your responders'"} last 10 pings and this device's app details, so you don't need to look them up.</div>
+        <div class="acts2"><button class="btn" id="tkCancel">Cancel</button><button class="btn primary" id="tkSend">Send to support</button></div>`;
+    } else {
+      inner=`<h3>Ticket sent</h3>
+        <p style="margin:0 0 8px"><span class="tkb" style="font-size:12px">Ticket ${ticket.id}</span></p>
+        <dl><dt>About</dt><dd>${ticket.reason}</dd><dt>Raised by</dt><dd>${by}</dd></dl>
+        <div class="hint">Support will reply here.</div>
+        <div class="acts2"><button class="btn primary" id="tkClose">Done</button></div>`;
+    }
+  } else {
+    const {r,h}=ticket;
+    const facts=`<dl><dt>Responder</dt><dd>${r.name}</dd><dt>When</dt><dd>${h[0]}</dd><dt>Area</dt><dd>${h[2]}</dd><dt>Outcome</dt><dd>${LABEL[h[1]]}</dd><dt>Callout</dt><dd>#${h[3]}</dd></dl>`;
+    if(ticket.step==="form"){
+      inner=`<h3>Report a problem with this ping <span class="chg">7</span></h3>${facts}
+        <label for="tkReason">What went wrong?</label>
+        <select id="tkReason">${TK_REASONS[h[1]].map(o=>`<option ${o===ticket.reason?"selected":""}>${o}</option>`).join("")}</select>
+        <label for="tkNote">Anything else? <span class="hint">(optional)</span></label>
+        <textarea id="tkNote" rows="3" placeholder="What happened on your side">${ticket.note}</textarea>
+        <div class="hint" style="margin-top:6px">Support gets this ping's full record attached: when it was sent, how long it waited, and who it went to next.</div>
+        <div class="acts2"><button class="btn" id="tkCancel">Cancel</button><button class="btn primary" id="tkSend">Send to support</button></div>`;
+    } else {
+      const fresh=ticket.step==="done";
+      inner=`<h3>${fresh?"Ticket sent":"Ticket already open"}</h3>
+        <p style="margin:0 0 8px"><span class="tkb" style="font-size:12px">Ticket ${h[4]}</span></p>${facts}
+        <div class="hint">${fresh?`Raised by ${by}. Support will reply here, and the ticket is linked to this ping on every screen that shows it.`:"There's already a ticket for this ping. Support will reply here."}</div>
+        <div class="acts2"><button class="btn primary" id="tkClose">Done</button></div>`;
+    }
+  }
+  box.innerHTML=`<div class="sheet-bg" id="tkBg"><div class="sheet" role="dialog" aria-modal="true" aria-label="Support ticket">${inner}</div></div>`;
+  const close=()=>{ticket=null;renderAll();};
+  document.getElementById("tkBg").onclick=e=>{if(e.target.id==="tkBg")close();};
+  const c=document.getElementById("tkCancel"); if(c) c.onclick=close;
+  const d=document.getElementById("tkClose"); if(d) d.onclick=close;
+  const rs=document.getElementById("tkReason"); if(rs) rs.onchange=()=>ticket.reason=rs.value;
+  const nt=document.getElementById("tkNote"); if(nt) nt.oninput=()=>ticket.note=nt.value;
+  const s=document.getElementById("tkSend"); if(s) s.onclick=()=>{
+    if(ticket.general){
+      if(!ticket.note.trim()){ticket.err=true;renderSheets();return;}
+      ticketSeq++; ticket.id="SUP-"+ticketSeq; ticket.step="done";
+      say(`Ticket ${ticket.id} sent: ${ticket.reason}`);
+    } else {
+      ticketSeq++; ticket.h[4]="SUP-"+ticketSeq; ticket.step="done";
+      say(`Ticket ${ticket.h[4]} sent about ${ticket.r.name}'s ping on ${ticket.h[0]}`);
+    }
+    renderAll();
+  };
+}
+
+function updateButtons(){
+  const r=focusR(), busy=!!live;
+  ["sendLocal","sendAway"].forEach(id=>{const b=document.getElementById(id);b.disabled=busy||!r.available;b.title=!r.available?`${r.name} is marked unavailable, so they won't be pinged`:busy?"A ping is already live":"";});
+  document.getElementById("restore").disabled=r.score>=0.85;
+}
+function renderAll(){renderConsole();renderHandlerPhone();renderPhone();renderSheets();bindTickets();placePins();}
+function placePins(){
+  requestAnimationFrame(()=>document.querySelectorAll(".pin[data-target]").forEach(pn=>{
+    const t=document.querySelector(pn.dataset.target), wrap=pn.parentElement;
+    if(!t||!t.getClientRects().length){pn.style.visibility="hidden";return;}
+    pn.style.visibility="";
+    const tr=t.getBoundingClientRect(), wr=wrap.getBoundingClientRect();
+    let top=pn.dataset.align==="top"?tr.top-wr.top+8:tr.top-wr.top+tr.height/2-12;
+    if(pn.dataset.clamp){const c=document.querySelector(pn.dataset.clamp).getBoundingClientRect();
+      top=Math.max(c.top-wr.top+36,Math.min(top,c.bottom-wr.top-36));}
+    pn.style.top=top+"px";
+  }));
+}
+document.querySelectorAll(".pin[data-target]").forEach(pn=>{
+  pn.addEventListener("mouseenter",()=>{const t=document.querySelector(pn.dataset.target);if(t)t.classList.add("hl");});
+  pn.addEventListener("mouseleave",()=>document.querySelectorAll(".hl").forEach(e=>e.classList.remove("hl")));
+});
+window.addEventListener("resize",placePins);
+["app","happ"].forEach(id=>document.getElementById(id).addEventListener("scroll",placePins));
+
+/* Handler marks a responder available or unavailable (console or handler phone). */
+function setAvail(name){
+  const p=P(), r=p.responders.find(x=>x.name===name);
+  if(live&&name===p.focus) return;
+  r.available=!r.available;
+  r.heldBy=r.available?null:p.handler;
+  p.alerts=p.alerts.filter(a=>a.avail!==name); // handler acted, so earlier availability alerts are stale
+  if(name===p.focus){
+    phoneNotices=phoneNotices.filter(n=>n.tag!=="handlerUnavail");
+    phoneNotices.unshift({k:"info",tag:r.available?null:"handlerUnavail",h:`${p.handler} marked you ${r.available?"available":"unavailable"} · ${now()}`,
+      t:r.available?"You can be pinged again.":"You won't be pinged until you or your handler switch it back. Your ranking won't drop while you're unavailable."});
+    phoneNotices=phoneNotices.slice(0,3);
+  }
+  say(`${name} marked ${r.available?"available":"unavailable"} by ${p.handler}`);
+  renderAll();
+}
+
+/* Responder switches their own availability on the phone. The handler hears about it. */
+function responderToggle(){
+  const p=P(), r=focusR();
+  r.available=!r.available;
+  const wasHeld=r.heldBy; r.heldBy=null;
+  phoneNotices=phoneNotices.filter(n=>n.tag!=="handlerUnavail");
+  p.alerts=p.alerts.filter(a=>a.avail!==r.name);
+  if(r.available){
+    p.alerts.unshift({k:"info",i:"✓",avail:r.name,t:`${r.name} is available again`,
+      s:wasHeld?`They switched themselves back on at ${now()}, after you marked them unavailable.`:`They switched themselves back on at ${now()}.`});
+  } else {
+    p.alerts.unshift({k:"warn",i:"!",avail:r.name,t:`${r.name} marked themselves unavailable`,
+      s:`At ${now()}. They won't be pinged until they switch back, or you do.`});
+  }
+  say(`${r.name} marked themselves ${r.available?"available":"unavailable"}`);
+  renderAll();
+}
+
+/* ---------- Flow ---------- */
+function sendPing(local,retryOf){
+  const p=P(), area=retryOf?retryOf.area:(local?p.area:AREAS[pairKey][Math.floor(Math.random()*3)]);
+  live=retryOf?{...retryOf,t:60,retry:true,nudged:false}:{area,local,tag:TAGS[Math.floor(Math.random()*TAGS.length)],travel:local?4+Math.floor(Math.random()*6):22+Math.floor(Math.random()*12),t:60,retry:false,nudged:false,callout:6000+Math.floor(Math.random()*900)};
+  liveResult=null; nudgeFlag=false;
+  clearInterval(ticker);
+  ticker=setInterval(()=>{if(!live)return;live.t-=0.25*speed;if(live.t<=0){resolve("m");}else updateTick();},250);
+  say(`Ping sent to ${p.focus}`);
+  renderAll();
+}
+function nudge(){
+  if(!live) return;
+  live.nudged=true;
+  const ph=document.getElementById("phone"); ph.classList.remove("shake"); void ph.offsetWidth; ph.classList.add("shake");
+  say(`${P().handler} nudged ${P().focus}`);
+  renderAll();
+}
+function resolve(o){
+  clearInterval(ticker);
+  const p=P(), r=focusR(), ping=live; live=null;
+  r.week[o]++;
+  r.history.unshift(["Today "+now(),o,ping.area,ping.callout]);
+  if(o==="t"){r.score+=0.08;missStreak=0;}
+  if(o==="d"){if(ping.local) r.score-=0.12; missStreak=0;}
+  if(o==="m"){r.score-=0.04;missStreak++;}
+  r.score=Math.max(0,Math.min(1,r.score));
+  const sd=standing(r);
+  if(o==="t"){
+    liveResult={c:"var(--taken)",text:`<b>${r.name}</b> took the ${ping.area} callout (${ping.tag}).`};
+    phoneNotices.unshift({k:"info",h:"Callout taken · "+now(),t:`You took the ${ping.area} callout. Your ranking moved up. Now: ${sd.label.toLowerCase()}.`});
+  }
+  if(o==="d"){
+    liveResult={c:"var(--down)",text:`<b>${r.name}</b> turned down the ${ping.area} callout. Offered to ${p.next}.`};
+    phoneNotices.unshift({k:"info",h:"Turned down · "+now(),t:ping.local?`It's been offered to the next responder. Turning down a local ping lowers your ranking. You're ${sd.label.toLowerCase()}.`:`That callout was outside your area, so turning it down didn't change your ranking.`});
+  }
+  if(o==="m"){
+    liveResult={c:"var(--missed)",text:`<b>${r.name}</b> missed the ${ping.area} ping. Offered to ${p.next}.`};
+    phoneNotices.unshift({h:"Missed ping · "+now(),t:`You missed a ping at ${now()} (${ping.area}, ${ping.tag}). It's been offered to the next responder. Missed pings lower your ranking a little. You're ${sd.label==="Normal"?"still ranked normally":sd.label.toLowerCase()}.`});
+    if(missStreak>=3) p.alerts.unshift({k:"bad",i:"!",t:`${r.name} has missed 3 pings in a row`,s:"Check their phone and alerts are working, or mark them unavailable."});
+    if(ping.local && !ping.retry){
+      setTimeout(()=>{
+        if(live) return;
+        liveResult={c:"var(--accent)",text:`${p.next==="The Gale"?"The Gale":"The next responder"} turned it down. The ${ping.area} callout goes back to <b>${r.name}</b> once. <span class="chg">6</span>`};
+        phoneNotices.unshift({k:"info",h:"It's back",t:`Nobody has taken the ${ping.area} callout yet, so it's been offered to you again.`});
+        sendPing(true,ping);
+      },Math.max(1200,6000/speed));
+    } else if(ping.retry){
+      p.alerts.unshift({k:"bad",i:"✕",t:`Unfilled callout in ${ping.area}`,s:`${ping.tag}. Everyone available was asked, including a second chance for ${r.name}. Nobody took it. All handlers in ${ping.area} were told at ${now()}.`});
+      phoneNotices.unshift({h:"Callout unfilled",t:`The ${ping.area} callout wasn't taken by anyone. Your handler has been told.`});
+    }
+  }
+  phoneNotices=phoneNotices.slice(0,3);
+  say(liveResult.text.replace(/<[^>]+>/g,""));
+  renderAll();
+}
+function restore(){
+  const p=P(), r=focusR();
+  r.score=0.85;
+  p.alerts.unshift({k:"info",i:"i",t:`${r.name}'s ranking restored to its 11 Aug level`,s:"A routing change in August caused the drop, so it's been undone. They're ranked normally again from today."});
+  phoneNotices.unshift({k:"info",h:"Your ranking was restored",t:"A change in August lowered your ranking unfairly. It's been put back to where it was on 11 Aug."});
+  phoneNotices=phoneNotices.slice(0,3);
+  p.digest=p.digest.map(d=>d[0]===r.name?[d[0],d[1].replace("Ranking: lower than usual, recovering.","Ranking restored to normal today.")]:d);
+  renderAll();
+}
+
+/* ---------- Wiring ---------- */
+document.querySelectorAll("#pairSeg button").forEach(b=>b.onclick=()=>{
+  if(live){clearInterval(ticker);live=null;}
+  pairKey=b.dataset.pair; liveResult=null; phoneNotices=[]; openRow=null; missStreak=0; ticket=null; hOpen=null;
+  document.querySelectorAll("#pairSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  renderAll();
+});
+document.querySelectorAll("#speedSeg button").forEach(b=>b.onclick=()=>{
+  speed=+b.dataset.speed;
+  document.querySelectorAll("#speedSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+});
+document.getElementById("sendLocal").onclick=()=>sendPing(true);
+document.getElementById("sendAway").onclick=()=>sendPing(false);
+document.getElementById("restore").onclick=restore;
+document.getElementById("reset").onclick=reset;
+const HL={"1":["#strip","#balanceCard","#hphone"],"2":["#phone"],"345":["#balanceCard","#app .pcard"],"6":["#phone"],"7":["#app .plist",".drill .plist","#happ .plist"]};
+function highlight(k){
+  const els=HL[k].flatMap(sel=>[...document.querySelectorAll(sel)]);
+  els.forEach(e=>e.classList.add("hl"));
+  if(els[0]) els[0].scrollIntoView({behavior:"smooth",block:"center"});
+  setTimeout(()=>els.forEach(e=>e.classList.remove("hl")),2400);
+}
+document.querySelectorAll("[data-pin]").forEach(b=>b.addEventListener("click",()=>highlight(b.dataset.pin)));
+document.querySelectorAll("#annoSeg button").forEach(b=>b.onclick=()=>{
+  document.body.classList.toggle("no-anno",b.dataset.anno==="off");
+  document.querySelectorAll("#annoSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+});
+reset();
+</script>
+</body>
+</html>
