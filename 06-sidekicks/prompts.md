@@ -52,3 +52,26 @@ No changes required yet, but how would you improve these for the following scena
 * Exec review - they want to know what went wrong and how we fix and prevent
 * Product team review - to share how we went from issue to fix
 * Squad retro - to improve ways of working between Eng and Product
+
+### 8.
+
+How do the proposed fixes impact the wider responder base beyond the quiet four?
+
+### 9.
+
+Model projections for all 16 responders
+
+### 10.
+
+Based on the 16 projections, do you think we should proceed with the proposed changes?
+
+### 11.
+
+Ensure the presentation reflects that we've modelled/projected for the entire responder base (and we didn't just tunnel vision on 4 responders) and why we think the proposed changes are on the right track. Be sure to include callouts/contingencies for:
+
+* Release A makes no difference to misses. Then the problem is the 60-second window itself, not visibility, and the brief’s premise of keeping 60s needs revisiting.
+* The out-of-area jump turns out to be a separate bug. Then fixing it may matter more than the score changes, and Release B should be rescoped.
+
+### 12.
+
+sanity check the deck to ensure the framing, storytelling, narrative, proof and projections are all in alignment with one another
