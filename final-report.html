@@ -188,7 +188,7 @@ footer{padding:30px 24px;text-align:center;font-size:13px;color:var(--muted)}
     <div class="stats rv d3">
       <div class="stat"><div class="n"><s>90s</s> 60s</div><p>Ping wait in 4.2. First pings to local responders missed: <b class="miss">0.7% → 11.4%</b>.</p></div>
       <div class="stat"><div class="n"><s>28%</s> 5%</div><p>The quiet four's share of all pings, from six weeks before 4.2 to three weeks after.</p></div>
-      <div class="stat"><div class="n">3×</div><p>Callout tickets since 18 Aug. They levelled off and haven't come down.</p></div>
+      <div class="stat"><div class="n">3×</div><p>Callout tickets at about 3× normal. They started rising on 13–14 Aug, levelled off, and haven't come down.</p></div>
     </div>
     <p class="byline rv d4">Rook Dispatch PM · Product School "Claude Code for PMs" · 7 Nov 2026 · Rook Industries is fictional.</p>
   </div>
@@ -253,7 +253,7 @@ footer{padding:30px 24px;text-align:center;font-size:13px;color:var(--muted)}
         <h3>Pings a week: now vs projected</h3>
         <div class="legend"><span><i style="background:#fff;border:2px solid var(--ink2)"></i>Now (3 weeks after 4.2)</span><span><i style="background:var(--blue)"></i>Projected = their usual week before 4.2</span></div>
         <svg id="all16" viewBox="0 0 560 520" role="img" aria-label="Six gainers drop back to their usual week, the middle six barely move, and the quiet four climb from 1 to 3 pings a week back to 11 to 14."></svg>
-        <p class="small muted" style="margin:6px 0 0">Totals match the brief: 71.6% taken (brief 72%) and 92.4% answered (brief 91.5%).</p>
+        <p class="small muted" style="margin:6px 0 0">Totals match the brief: 71.6% taken (brief 72%) and 92.4% answered (brief 91.5%). The quiet four's share comes out at 28.4% against the brief's 27%, because here everyone returns fully to their usual week.</p>
       </div>
       <div class="rv d2">
         <h3 style="font-size:20px;margin-bottom:10px">Why it's on the right track</h3>
@@ -271,9 +271,9 @@ footer{padding:30px 24px;text-align:center;font-size:13px;color:var(--muted)}
       <div class="card rv d1" style="border-left:5px solid var(--missed)">
         <p class="kicker" style="color:var(--missed);margin-bottom:8px">Contingency 1 · Release A</p>
         <h3>Release A makes no difference to misses</h3>
-        <p class="small" style="margin:6px 0"><b>Signal:</b> 3 full weeks after Release A, pings answered is still under about 88% (now 84.9%, target 91.5%). The weekly outcome review flags it.</p>
+        <p class="small" style="margin:6px 0"><b>Signal:</b> 3 full weeks after Release A, pings answered is still at or near today's 84.9%, so the weekly outcome review marks it Off track (below the brief's 85% floor; target 91.5%).</p>
         <p class="small" style="margin:6px 0"><b>What it means:</b> the problem is the 60-second window itself, not visibility. The brief's premise of keeping 60s needs revisiting.</p>
-        <p class="small" style="margin:6px 0 0"><b>What we'd do:</b> test 90s on its own in a separate release, using the answer times we start logging now. Release B still ships, because callouts filled and the quiet four's share recover in every case.</p>
+        <p class="small" style="margin:6px 0 0"><b>What we'd do:</b> test 90s on its own in a separate release, using the answer times we start logging now. That is a deliberate change to the ping wait, so we agree it first and update release-qa's agreed value; otherwise the skill blocks it. Release B still ships: it targets callouts filled and the quiet four's share, which don't depend on the alerts.</p>
       </div>
       <div class="card rv d2" style="border-left:5px solid var(--gold)">
         <p class="kicker" style="color:#8a5a00;margin-bottom:8px">Contingency 2 · before Release B</p>
@@ -321,7 +321,7 @@ footer{padding:30px 24px;text-align:center;font-size:13px;color:var(--muted)}
     <h2 class="rv">The handover had gaps. I asked where.</h2>
     <div class="mod">
       <ul class="find rv d1">
-        <li><span class="ic r">!</span><div><b>Nobody had written down how ranking works.</b> Wen built it and Priya asked me to write the description. Marcus's question about who the change applied to had gone unanswered since 14 Aug.</div></li>
+        <li><span class="ic r">!</span><div><b>Nobody had written down how ranking works.</b> Wen built it and Priya asked me to write the description. Marcus's question about who the change applied to had gone unanswered since 14 Aug. (I answered it in Module 4: the change applied to everyone, with no split by turn-down history.)</div></li>
         <li><span class="ic g">?</span><div><b>"Availability Confidence" was committed to 4.2</b> but isn't in the release notes. The roadmap was last reviewed on 30 Jun and still lists Priya as owner of everything.</div></li>
         <li><span class="ic g">?</span><div><b>"It's August softness" can't be checked.</b> The data only runs from 29 Jun to 6 Sep, so there's no earlier August to compare against.</div></li>
         <li><span class="ic b">i</span><div><b>Security Policy 4.1 isn't in the wiki</b>, though the hard rule says to read it before touching responder records.</div></li>
@@ -379,7 +379,7 @@ footer{padding:30px 24px;text-align:center;font-size:13px;color:var(--muted)}
 * Who got pinged less (-3)
 
 Same metrics, just recategorized for a different view</q></div>
-        <p class="why">Why it worked: overall acceptance only fell from 77% to about 70%, which looks survivable. Grouping responders by what happened to them showed the whole drop landing on four people.</p>
+        <p class="why">Why it worked: overall acceptance only fell from 77% to 66–73%, which looks survivable. Grouping responders by what happened to them showed the whole drop landing on four people.</p>
         <div class="prompt alt"><div class="who">Then I checked the timing <em>#7</em></div><q>Compare the support_tickets table on rook-database against the pings table. Do they agree with each other? When do the numbers actually move?</q></div>
       </div>
     </div>
@@ -390,7 +390,7 @@ Same metrics, just recategorized for a different view</q></div>
 <section class="slide" id="s-m4" data-title="04 X-Ray Vision">
   <div class="wrap">
     <p class="kicker rv"><span class="badge">04 · X-Ray Vision</span> How I found it</p>
-    <h2 class="rv">Into the code: the line that does it.</h2>
+    <h2 class="rv">Into the code: the line that keeps them down.</h2>
     <div class="mod">
       <div class="rv d1">
         <div class="code"><span class="c"># history.py</span>
