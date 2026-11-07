@@ -44,3 +44,11 @@ Ask clarifying questions as needed
 ### 6.
 
 Will the QA skill validate both the code and the UI?
+
+### 7.
+
+No changes required yet, but how would you improve these for the following scenarios/audiences?
+
+* Exec review - they want to know what went wrong and how we fix and prevent
+* Product team review - to share how we went from issue to fix
+* Squad retro - to improve ways of working between Eng and Product
